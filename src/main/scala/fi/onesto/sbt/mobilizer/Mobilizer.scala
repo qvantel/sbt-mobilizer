@@ -1,6 +1,7 @@
 package fi.onesto.sbt.mobilizer
 
-import scala.concurrent.{ExecutionContext, future}
+import scala.concurrent.{Future, ExecutionContext, Await, future}
+import scala.concurrent.duration.Duration.Inf
 import net.schmizz.sshj.SSHClient
 import sbt._
 import sbt.classpath.ClasspathUtilities
@@ -11,47 +12,108 @@ object Mobilizer extends Plugin {
   type Connections = Map[String, SSHClient]
 
   val deployEnvironments = settingKey[Map[Symbol, DeploymentEnvironment]]("A map of deployment environments")
+  val deployDependencies = taskKey[Keys.Classpath]("Dependencies for deployment")
   val deploy = inputKey[String]("Deploy to given environment")
+  val hello = taskKey[Unit]("hello")
 
   val deploySettings = Seq(
+    deployDependencies := Seq.empty,
+
     deploy := {
       implicit val log = Keys.streams.value.log
+      implicit val releaseId = generateReleaseId()
       val args: Seq[String] = Def.spaceDelimited("<arg>").parsed
-      val releaseId = generateReleaseId()
       val environmentName = args(0)
       val env = deployEnvironments.value(Symbol(environmentName))
+      val startupScriptName = Keys.name.value
+      val mainClass = (Keys.mainClass in Runtime).value getOrElse "Main"
+      val pkg = (sbt.Keys.`package` in Compile).value
+      val deps = deployDependencies.value.map(_.data).filter(ClasspathUtilities.isArchive).map(_.getPath)
+      val libs = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive).map(_.getPath)
       val rsync = Rsync()
 
       log.info(s"Deploying to $environmentName")
 
-      withConnections(env) { connections =>
+      withConnections(env) { implicit connections =>
         log.debug(s"connections are open")
+        env.createReleasesDirectories()
+        val previousReleaseDirectories = env.findPreviousReleaseDirectories()
+        env.createReleaseDirectories()
+        try {
+          val startupScriptPath = s"${env.releaseDirectory(releaseId)}/$startupScriptName"
 
-        val previousReleaseDirectories = findPreviousReleaseDirectories(env, connections)
-        val releaseDirectory = createReleaseDirectory(env, releaseId, connections)
-        val pkg = (sbt.Keys.`package` in Compile).value
-        val jars = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive).map(_.getPath)
+          log.info(s"Creating startup script $startupScriptPath")
+          env.createFile(startupScriptPath, env.startupScriptContent(pkg.getName, mainClass), "0755")
 
-        val copyPackageTasks = env.hosts map { host =>
-          future {
-            val target = s"${env.username}@$host:${env.releaseDirectory(releaseId)}/"
-            log.info(s"$host: Copying package $pkg to ${env.releaseDirectory(releaseId)}")
-            rsync(Seq(pkg.getPath), target)
+          val copyPackageTasks = env.hosts map { host =>
+            future {
+              val target = s"${env.username}@$host:${env.releaseDirectory(releaseId)}/"
+              log.info(s"$host: Copying package $pkg to ${env.releaseDirectory(releaseId)}")
+              rsync.withLinkDest(Seq(pkg.getPath), previousReleaseDirectories(host), target)
+            }
           }
-        }
 
-        val copyJarsTasks = env.hosts map { host =>
-          future {
-            val target = s"${env.username}@$host:${env.libDirectory(releaseId)}"
-            log.info(s"$host: Copying libraries to ${env.libDirectory(releaseId)}")
-            rsync.withLinkDest(jars, previousReleaseDirectories(host), target)
+          val copyLibsTasks = env.hosts map { host =>
+            future {
+              val target = s"${env.username}@$host:${env.libDirectory(releaseId)}"
+              val jars = libs ++ deps
+              log.info(s"$host: Copying libraries to ${env.libDirectory(releaseId)}")
+              rsync.withLinkDest(jars, previousReleaseDirectories(host).map(_ + "/lib/"), target)
+            }
           }
+
+          Await.result(Future.sequence(copyPackageTasks ++ copyLibsTasks), Inf)
+
+          env.updateSymlinks()
+        } catch {
+          case e: Exception =>
+            log.error(s"Deployment error: $e")
+            env.restoreSymlinks(previousReleaseDirectories)
+            env.removeCurrentRelease()
+            throw e
         }
       }
-
       releaseId
     }
   )
+
+
+/*
+  class DeploymentTask(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
+
+    private def updateSymlinks(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
+      connections foreach { case (hostname: String, client: SSHClient) =>
+        val releaseDirectory = env.releaseDirectory(releaseId)
+        log.debug(s"$hostname: updating current symlink to $releaseDirectory")
+        client.symlink(releaseDirectory, env.currentDirectory)
+      }
+    }
+
+    private def createReleaseDirectory(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger): String = {
+      connections map { case (hostname: String, client: SSHClient) =>
+        val releaseDirectory = env.releaseDirectory(releaseId)
+        log.debug(s"$hostname: creating release directory $releaseDirectory")
+        client.mkdirWithParents(releaseDirectory)
+      }
+      env.releaseDirectory(releaseId)
+    }
+
+    private def findPreviousReleaseDirectories(env: DeploymentEnvironment, connections: Connections)(implicit log: Logger): Map[String, Option[String]] = {
+      connections map { case (hostname: String, client: SSHClient) =>
+        log.debug(s"$hostname: creating releases directory ${env.releasesDirectory}")
+        client.mkdirWithParents(env.releasesDirectory)
+        hostname -> client.run("find", env.releasesDirectory, "-mindepth", "1", "-maxdepth", "1", "-type", "d").toSeq.sorted.lastOption
+      }
+    }
+  }
+
+  private def updateSymlinks(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
+    connections foreach { case (hostname: String, client: SSHClient) =>
+      val releaseDirectory = env.releaseDirectory(releaseId)
+      log.debug(s"$hostname: updating current symlink to $releaseDirectory")
+      client.symlink(releaseDirectory, env.currentDirectory)
+    }
+  }
 
   private def createReleaseDirectory(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger): String = {
     connections map { case (hostname: String, client: SSHClient) =>
@@ -69,6 +131,7 @@ object Mobilizer extends Plugin {
       hostname -> client.run("find", env.releasesDirectory, "-mindepth", "1", "-maxdepth", "1", "-type", "d").toSeq.sorted.lastOption
     }
   }
+*/
 
   private def withConnections[A](environment: DeploymentEnvironment)(action: Connections => A)(implicit log: Logger): A = {
     val connections: Map[String, SSHClient] = openConnections(environment)

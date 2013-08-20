@@ -9,11 +9,13 @@ case class Rsync(
 
   def apply(sources: Seq[String], target: String)(implicit log: Logger) {
     val command = commandPath +: (baseOptions ++ sources) :+ target
+    log.info(s"Running rsync command: $command")
     Process(command) ! log
   }
 
   def withLinkDest(sources: Seq[String], linkDest: Option[String], target: String)(implicit log: Logger) {
     val command = commandPath +: (baseOptions ++ linkDest.map("--link-dest=" + _).toList ++ sources) :+ target
+    log.info(s"Running rsync command: $command")
     Process(command) ! log
   }
 }
