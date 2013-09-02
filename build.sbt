@@ -20,7 +20,7 @@ publishArtifact in Test := false
 
 scalaVersion := "2.10.2"
 
-sbtVersion := "0.13.0-RC5"
+sbtVersion := "0.13.0"
 
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
@@ -54,7 +54,7 @@ scalacOptions in ThisBuild ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.github.nscala-time" %% "nscala-time"                 % "0.4.2",
+  "com.github.nscala-time" %% "nscala-time"                 % "0.6.0",
   "org.bouncycastle"        % "bcprov-jdk16"                % "1.46",
   "com.jcraft"              % "jzlib"                       % "1.1.2",
   "ch.qos.logback"          % "logback-classic"             % "1.0.13",
