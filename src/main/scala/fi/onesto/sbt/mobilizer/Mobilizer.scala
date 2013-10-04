@@ -12,7 +12,7 @@ object Mobilizer extends Plugin {
   type Connections = Map[String, SSHClient]
 
   val deployEnvironments = settingKey[Map[Symbol, DeploymentEnvironment]]("A map of deployment environments")
-  val deployDependencies = taskKey[Keys.Classpath]("Dependencies for deployment")
+  val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
   val deploy = inputKey[String]("Deploy to given environment")
   val hello = taskKey[Unit]("hello")
 
@@ -28,7 +28,7 @@ object Mobilizer extends Plugin {
       val startupScriptName = Keys.name.value
       val mainClass = (Keys.mainClass in Runtime).value getOrElse "Main"
       val pkg = (sbt.Keys.`package` in Compile).value
-      val deps = deployDependencies.value.map(_.data).filter(ClasspathUtilities.isArchive).map(_.getPath)
+      val deps = deployDependencies.value.filter(ClasspathUtilities.isArchive).map(_.getPath)
       val libs = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive).map(_.getPath)
       val rsync = Rsync()
 
