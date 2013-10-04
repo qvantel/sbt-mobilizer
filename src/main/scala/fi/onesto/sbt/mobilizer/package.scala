@@ -77,7 +77,9 @@ package object mobilizer {
         |
         |CLASSPATH="$pkgPath:`find $libPath -type f -name '*.jar' | paste -sd:`"
         |export CLASSPATH
-        |exec ${env.javaBin} $mainClass "$$@"
+        |exec ${env.javaBin} \
+        |    ${env.javaOpts.mkString(" ")} \
+        |    $mainClass "$$@"
         |""".stripMargin
     }
 

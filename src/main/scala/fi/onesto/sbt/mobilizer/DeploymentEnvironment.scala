@@ -13,6 +13,7 @@ case class DeploymentEnvironment(
     currentDirectoryName:  String                        = "current",
     libDirectoryName:      String                        = "lib",
     javaBin:               String                        = "java",
+    javaOpts:              Seq[String]                   = Seq.empty,
     startCommand:          Option[(String, Seq[String])] = None,
     restartCommand:        Option[(String, Seq[String])] = None,
     checkCommand:          Option[(String, Seq[String])] = None) {
