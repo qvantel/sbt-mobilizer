@@ -18,9 +18,9 @@ publishMavenStyle := false
 publishArtifact in Test := false
 
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.4"
 
-sbtVersion := "0.13.0"
+sbtVersion := "0.13.1"
 
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
