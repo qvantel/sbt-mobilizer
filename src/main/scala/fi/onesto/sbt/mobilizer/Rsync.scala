@@ -30,6 +30,5 @@ object Rsync {
     "--compress",
     "--human-readable",
     "--itemize-changes",
-    "--progress",
-    "--bwlimit=64")
+    "--progress")
 }
