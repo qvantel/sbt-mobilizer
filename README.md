@@ -14,8 +14,9 @@ The directory structure is similar to Capistrano:
 
 The startup script starts the application in the foreground.
 
-Usage
------
+
+Installation
+------------
 
 If you do not have it already, create a `project/project/Plugins.scala` with content like:
  
@@ -26,7 +27,11 @@ If you do not have it already, create a `project/project/Plugins.scala` with con
       lazy val plugins = Project("plugins", file(".")).dependsOn(sbtMobilizerPlugin)
     }
 
-Then add this to your `build.sbt`:
+
+Usage
+-----
+
+Add this to your `build.sbt`:
 
     // enable sbt-mobilizer
     deploySettings
