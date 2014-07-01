@@ -2,6 +2,7 @@ package fi.onesto.sbt.mobilizer
 
 import scala.concurrent.{Future, ExecutionContext, Await, future}
 import scala.concurrent.duration.Duration.Inf
+import org.slf4j.impl.StaticLoggerBinder
 import net.schmizz.sshj.SSHClient
 import sbt._
 import sbt.classpath.ClasspathUtilities
@@ -21,6 +22,8 @@ object Mobilizer extends Plugin {
 
     deploy := {
       implicit val log = Keys.streams.value.log
+      StaticLoggerBinder.startSbt(log.asInstanceOf[AbstractLogger])
+
       implicit val releaseId = generateReleaseId()
       val args: Seq[String] = Def.spaceDelimited("<arg>").parsed
       val environmentName = args(0)
