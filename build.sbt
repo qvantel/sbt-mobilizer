@@ -4,7 +4,7 @@ name := "mobilizer"
 
 organization := "fi.onesto.sbt"
 
-version := "0.0.1-SNAPSHOT"
+version := "0.0.1"
 
 description := "Deployment plugin for SBT"
 
