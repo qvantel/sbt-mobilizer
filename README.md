@@ -17,7 +17,16 @@ The startup script starts the application in the foreground.
 Usage
 -----
 
-Add this to your `build.sbt`:
+If you do not have it already, create a `project/project/Plugins.scala` with content like:
+ 
+    import sbt._
+    
+    object Plugins extends Build {
+      lazy val sbtMobilizerPlugin = uri("git://github.com/onesto/sbt-mobilizer.git")
+      lazy val plugins = Project("plugins", file(".")).dependsOn(sbtMobilizerPlugin)
+    }
+
+Then add this to your `build.sbt`:
 
     // enable sbt-mobilizer
     deploySettings
