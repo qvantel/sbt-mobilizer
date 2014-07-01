@@ -35,4 +35,4 @@ Add this to your `build.sbt`:
         hosts         = Seq("production.example.com"),
         rootDirectory = "/opt/myapp"))
 
-See [DeploymentEnvironment.scala](src/main/scala/fi/onesto/sbt/mobilizer/DeploymentEnvironment) for a list of all settings and defaults.
+See [DeploymentEnvironment.scala](src/main/scala/fi/onesto/sbt/mobilizer/DeploymentEnvironment.scala) for a list of all settings and defaults.
