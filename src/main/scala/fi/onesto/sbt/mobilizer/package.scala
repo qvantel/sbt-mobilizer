@@ -10,6 +10,8 @@ package object mobilizer {
   import util._
 
   implicit class RichSSHClient(underlying: SSHClient) {
+    private[this] final val BufferSize = 32768
+
     def withSession[A](action: Session => A): A = {
       val session = underlying.startSession()
       try {
@@ -31,8 +33,16 @@ package object mobilizer {
     def run(commandName: String, args: String*): Iterator[String] =
       runWithOptionalInput(commandName, None, args: _*)
 
+    def runAndDiscard(commandName: String, args: String*) {
+      runWithOptionalInputAndDiscard(commandName, None, args: _*)
+    }
+
     def runWithInput(commandName: String, input: String, args: String*): Iterator[String] =
       runWithOptionalInput(commandName, Some(input), args: _*)
+
+    def runWithInputAndDiscard(commandName: String, input: String, args: String*) {
+      runWithOptionalInputAndDiscard(commandName, Some(input), args: _*)
+    }
 
     def runWithOptionalInput(commandName: String, inputOption: Option[String], args: String*): Iterator[String] = {
       withSession { session =>
@@ -51,21 +61,38 @@ package object mobilizer {
       }
     }
 
-    def mkdir(paths: String*) = run("mkdir", paths: _*)
+    def runWithOptionalInputAndDiscard(commandName: String, inputOption: Option[String], args: String*) {
+      withSession { session =>
+        val command = session.exec(shellQuote(commandName, args: _*))
+        inputOption foreach { input =>
+          command.getOutputStream.write(input.getBytes)
+          command.getOutputStream.close()
+        }
+        discard(command.getInputStream)
+        command.getInputStream.close()
+        val errors = io.Source.fromInputStream(command.getErrorStream).getLines().mkString("\n")
+        command.join()
+        val exitStatus = command.getExitStatus
+        if (exitStatus != 0)
+          throw new CommandException(commandName, errors, exitStatus)
+      }
+    }
 
-    def mkdirWithParents(paths: String*) = run("mkdir", "-p" +: paths: _*)
+    def mkdir(paths: String*): Unit = runAndDiscard("mkdir", paths: _*)
 
-    def symlink(source: String, destination: String) = run("ln", "-nsf", source, destination)
+    def mkdirWithParents(paths: String*): Unit = runAndDiscard("mkdir", "-p" +: paths: _*)
+
+    def symlink(source: String, destination: String): Unit = runAndDiscard("ln", "-nsf", source, destination)
 
     def listFiles(): Iterator[String] = run("ls")
 
     def listFiles(path: String): Iterator[String] = run("ls", path)
 
-    def createFile(path: String, content: String, mode: String = "0644") =
-      runWithInput("sh", content, "-c", "cat > " + path + " && chmod " + mode + " " + path)
+    def createFile(path: String, content: String, mode: String = "0644") {
+      runWithInputAndDiscard("sh", content, "-c", "cat > " + path + " && chmod " + mode + " " + path)
+    }
 
-    def rmTree(path: String) =
-      run("rm", "-rf", path)
+    def rmTree(path: String): Unit = runAndDiscard("rm", "-rf", path)
   }
 
   implicit class RichDeploymentEnvironment(env: DeploymentEnvironment)(implicit connections: Map[String, SSHClient], releaseId: String, log: Logger) {
@@ -91,27 +118,39 @@ package object mobilizer {
     def run(commandName: String, args: String*): Map[String, Iterator[String]] =
       runWithOptionalInput(commandName, None, args: _*)
 
+    def runAndDiscard(commandName: String, args: String*) {
+      runWithOptionalInputAndDiscard(commandName, None, args: _*)
+    }
+
     def runWithInput(commandName: String, input: String, args: String*): Map[String, Iterator[String]] =
       runWithOptionalInput(commandName, Some(input), args: _*)
+
+    def runWithInputAndDiscard(commandName: String, input: String, args: String*) {
+      runWithOptionalInputAndDiscard(commandName, Some(input), args: _*)
+    }
 
     def runWithOptionalInput(commandName: String, input: Option[String], args: String*): Map[String, Iterator[String]] =
       onEachHost(_.runWithOptionalInput(commandName, input, args: _*))
 
-    def mkdir(paths: String*) = run("mkdir", paths: _*)
+    def runWithOptionalInputAndDiscard(commandName: String, input: Option[String], args: String*) {
+      onEachHost(_.runWithOptionalInputAndDiscard(commandName, input, args: _*))
+    }
 
-    def mkdirWithParents(paths: String*) = run("mkdir", "-p" +: paths: _*)
+    def mkdir(paths: String*): Unit = runAndDiscard("mkdir", paths: _*)
 
-    def symlink(source: String, destination: String) = run("ln", "-nsf", source, destination)
+    def mkdirWithParents(paths: String*): Unit = runAndDiscard("mkdir", "-p" +: paths: _*)
+
+    def symlink(source: String, destination: String): Unit = runAndDiscard("ln", "-nsf", source, destination)
 
     def listFiles(): Map[String, Iterator[String]] = run("ls")
 
     def listFiles(path: String): Map[String, Iterator[String]] = run("ls", path)
 
-    def createFile(path: String, content: String, mode: String = "0644") =
-      runWithInput("sh", content, "-c", "cat > " + path + " && chmod " + mode + " " + path)
+    def createFile(path: String, content: String, mode: String = "0644") {
+      runWithInputAndDiscard("sh", content, "-c", "cat > " + path + " && chmod " + mode + " " + path)
+    }
 
-    def rmTree(path: String) =
-      run("rm", "-rf", path)
+    def rmTree(path: String): Unit = runAndDiscard("rm", "-rf", path)
 
     def createReleasesDirectories() {
       log.info(s"Creating releases directory ${env.releasesDirectory}")
