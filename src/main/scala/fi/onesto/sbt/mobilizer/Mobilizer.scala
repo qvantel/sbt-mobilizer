@@ -77,62 +77,6 @@ object Mobilizer extends Plugin {
     }
   )
 
-
-/*
-  class DeploymentTask(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
-
-    private def updateSymlinks(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
-      connections foreach { case (hostname: String, client: SSHClient) =>
-        val releaseDirectory = env.releaseDirectory(releaseId)
-        log.debug(s"$hostname: updating current symlink to $releaseDirectory")
-        client.symlink(releaseDirectory, env.currentDirectory)
-      }
-    }
-
-    private def createReleaseDirectory(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger): String = {
-      connections map { case (hostname: String, client: SSHClient) =>
-        val releaseDirectory = env.releaseDirectory(releaseId)
-        log.debug(s"$hostname: creating release directory $releaseDirectory")
-        client.mkdirWithParents(releaseDirectory)
-      }
-      env.releaseDirectory(releaseId)
-    }
-
-    private def findPreviousReleaseDirectories(env: DeploymentEnvironment, connections: Connections)(implicit log: Logger): Map[String, Option[String]] = {
-      connections map { case (hostname: String, client: SSHClient) =>
-        log.debug(s"$hostname: creating releases directory ${env.releasesDirectory}")
-        client.mkdirWithParents(env.releasesDirectory)
-        hostname -> client.run("find", env.releasesDirectory, "-mindepth", "1", "-maxdepth", "1", "-type", "d").toSeq.sorted.lastOption
-      }
-    }
-  }
-
-  private def updateSymlinks(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger) {
-    connections foreach { case (hostname: String, client: SSHClient) =>
-      val releaseDirectory = env.releaseDirectory(releaseId)
-      log.debug(s"$hostname: updating current symlink to $releaseDirectory")
-      client.symlink(releaseDirectory, env.currentDirectory)
-    }
-  }
-
-  private def createReleaseDirectory(env: DeploymentEnvironment, releaseId: String, connections: Connections)(implicit log: Logger): String = {
-    connections map { case (hostname: String, client: SSHClient) =>
-      val releaseDirectory = env.releaseDirectory(releaseId)
-      log.debug(s"$hostname: creating release directory $releaseDirectory")
-      client.mkdirWithParents(releaseDirectory)
-    }
-    env.releaseDirectory(releaseId)
-  }
-
-  private def findPreviousReleaseDirectories(env: DeploymentEnvironment, connections: Connections)(implicit log: Logger): Map[String, Option[String]] = {
-    connections map { case (hostname: String, client: SSHClient) =>
-      log.debug(s"$hostname: creating releases directory ${env.releasesDirectory}")
-      client.mkdirWithParents(env.releasesDirectory)
-      hostname -> client.run("find", env.releasesDirectory, "-mindepth", "1", "-maxdepth", "1", "-type", "d").toSeq.sorted.lastOption
-    }
-  }
-*/
-
   private def withConnections[A](environment: DeploymentEnvironment)(action: Connections => A)(implicit log: Logger): A = {
     val connections: Map[String, SSHClient] = openConnections(environment)
     try {
