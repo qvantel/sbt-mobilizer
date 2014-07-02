@@ -4,7 +4,7 @@ name := "mobilizer"
 
 organization := "fi.onesto.sbt"
 
-version := "0.0.1"
+version := "0.0.2"
 
 description := "Deployment plugin for SBT"
 
@@ -60,7 +60,7 @@ libraryDependencies ++= Seq(
   "org.bouncycastle"        % "bcprov-jdk15on"              % "1.50",
   "com.jcraft"              % "jzlib"                       % "1.1.3",
   "org.slf4j"               % "slf4j-api"                   % "1.7.7",
-  "net.schmizz"             % "sshj"                        % "0.9.0",
+  "net.schmizz"             % "sshj"                        % "0.10.0",
   "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.7",
   "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.7",
   "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.7",
