@@ -15,7 +15,6 @@ object Mobilizer extends Plugin {
   val deployEnvironments = settingKey[Map[Symbol, DeploymentEnvironment]]("A map of deployment environments")
   val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
   val deploy = inputKey[String]("Deploy to given environment")
-  val hello = taskKey[Unit]("hello")
 
   val deploySettings = Seq(
     deployDependencies := Seq.empty,
