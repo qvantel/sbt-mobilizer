@@ -87,8 +87,8 @@ class Deployer(
       for (hostname <- environment.hosts) {
         val (ssh, _) = connections(hostname)
         log.info(s"Restarting on $hostname")
-        ssh.runShAndDiscard(runRestart)
-        ssh.runShAndDiscard(runCheck)
+        ssh.runShAndDiscard(runRestart, WithPty)
+        ssh.runShAndDiscard(runCheck, WithPty)
       }
     }
   }

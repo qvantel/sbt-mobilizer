@@ -40,7 +40,7 @@ Add this to your `build.sbt`:
     // dependencies to other modules explicitly
     deployDependencies := Seq((Keys.`package` in Compile in sharedModule).value)
     
-    // define deployment environments see 
+    // define deployment environments see
     deployEnvironments := Map(
       'staging -> fi.onesto.sbt.mobilizer.DeploymentEnvironment(
         hosts         = Seq("staging.example.com"),

@@ -28,8 +28,10 @@ package object mobilizer {
     def run(commandName: String, args: String*): Iterator[String] =
       runWithOptionalInput(commandName, None, args: _*)
 
-    def runShAndDiscard(commandLine: String) {
+    def runShAndDiscard(commandLine: String, requestPty: RequestPty = NoPty) {
       withSession { session =>
+        if (requestPty == WithPty)
+          session.allocateDefaultPTY()
         val command = session.exec(commandLine)
         command.getOutputStream.close()
         val errors = IOUtils.readFully(command.getErrorStream).toString
