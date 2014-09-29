@@ -14,6 +14,7 @@ object Mobilizer extends Plugin {
 
   val deployEnvironments = settingKey[Environments]("A map of deployment environments")
   val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
+  val deployRevision = taskKey[Option[String]]("The content of the REVISION file in the release directory")
   val deploy = inputKey[String]("Deploy to given environment")
 
   val deploySettings = Seq(
@@ -28,6 +29,7 @@ object Mobilizer extends Plugin {
       val mainPackage  = (Keys.`package` in Compile).value
       val mainClass    = (Keys.mainClass in Runtime).value getOrElse "Main"
       val libraries    = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
+      val revision     = deployRevision.value
       val log          = Keys.streams.value.log
 
       val releaseId = generateReleaseId()
@@ -43,15 +45,18 @@ object Mobilizer extends Plugin {
         mainPackage  = mainPackage,
         mainClass    = mainClass,
         dependencies = dependencies,
-        libraries    = libraries)
+        libraries    = libraries,
+        revision     = revision)
 
       log.info(s"$moduleName deployed to $environmentName")
 
       releaseId
-    }
+    },
+
+    deployRevision := None
   )
 
-  def environmentParser(available: Map[Symbol, DeploymentEnvironment]): Parser[(String, DeploymentEnvironment)] = {
+  private[this] def environmentParser(available: Map[Symbol, DeploymentEnvironment]): Parser[(String, DeploymentEnvironment)] = {
     import Parsers._
 
     Space ~> StringBasic
