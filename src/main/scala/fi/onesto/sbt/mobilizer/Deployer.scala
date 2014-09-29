@@ -144,7 +144,7 @@ class Deployer(
     revision map { content =>
       log.info(s"[$moduleName] Creating revision file $revisionFilePath")
       for ((hostname, (ssh, sftp)) <- connections) {
-        sftp.put(content, revisionFilePath)
+        sftp.put(stringSourceFile("REVISION", content), revisionFilePath)
       }
     } getOrElse {
       log.warn(s"[$moduleName] Revision information not available, not creating $revisionFilePath")
