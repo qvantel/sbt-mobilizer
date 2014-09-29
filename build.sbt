@@ -56,14 +56,14 @@ scalacOptions in ThisBuild ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.github.nscala-time" %% "nscala-time"                 % "1.2.0",
-  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.50",
+  "com.github.nscala-time" %% "nscala-time"                 % "1.4.0",
+  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.51",
   "com.jcraft"              % "jzlib"                       % "1.1.3",
   "org.slf4j"               % "slf4j-api"                   % "1.7.7",
   "net.schmizz"             % "sshj"                        % "0.10.0",
-  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.7",
-  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.7",
-  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.7",
-  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.7",
+  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.8",
+  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.8",
+  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.8",
+  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.8",
   "commons-pool"            % "commons-pool"                % "1.6"
 )
