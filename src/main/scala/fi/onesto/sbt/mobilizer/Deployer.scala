@@ -21,6 +21,7 @@ class Deployer(
     mainClass:    String,
     dependencies: Seq[sbt.File],
     libraries:    Seq[sbt.File],
+    revision:     Option[String],
     connections:  Deployer.Connections) {
   import Deployer._
 
@@ -47,6 +48,7 @@ class Deployer(
         |""".stripMargin
   }
   private[this] val startupScriptFile = stringSourceFile(startupScriptName, startupScriptContent)
+  private[this] val revisionFilePath = s"${environment.releaseDirectory(releaseId)}/REVISION"
 
   def run() {
     val previousReleaseDirectories = findPreviousReleaseDirectories()
@@ -58,6 +60,7 @@ class Deployer(
       val copyTask = Future.sequence(packageCopyTasks ++ libraryCopyTasks)
 
       createStartupScript()
+      createRevisionFile()
 
       Await.result(copyTask, Inf)
 
@@ -137,6 +140,17 @@ class Deployer(
     }
   }
 
+  private[this] def createRevisionFile() {
+    revision map { content =>
+      log.info(s"[$moduleName] Creating revision file $revisionFilePath")
+      for ((hostname, (ssh, sftp)) <- connections) {
+        sftp.put(content, revisionFilePath)
+      }
+    } getOrElse {
+      log.warn(s"[$moduleName] Revision information not available, not creating $revisionFilePath")
+    }
+  }
+
   private[this] def updateSymlink() {
     log.info(s"[$moduleName] Setting “current” symlink to $releaseDirectory")
     for ((_, (ssh, _)) <- connections) {
@@ -190,16 +204,17 @@ object Deployer {
     "--compress")
 
   def run(moduleName:   String,
-            releaseId:    String,
-            log:          sbt.Logger,
-            environment:  DeploymentEnvironment,
-            mainPackage:  sbt.File,
-            mainClass:    String,
-            dependencies: Seq[sbt.File],
-            libraries:    Seq[sbt.File]) {
+          releaseId:    String,
+          log:          sbt.Logger,
+          environment:  DeploymentEnvironment,
+          mainPackage:  sbt.File,
+          mainClass:    String,
+          dependencies: Seq[sbt.File],
+          libraries:    Seq[sbt.File],
+          revision:     Option[String]) {
     val connections = openConnections(environment)
     try {
-      val deployer = new Deployer(moduleName, releaseId, log, environment, mainPackage, mainClass, dependencies, libraries, connections)
+      val deployer = new Deployer(moduleName, releaseId, log, environment, mainPackage, mainClass, dependencies, libraries, revision, connections)
       deployer.run()
     } finally {
       closeConnections(connections)
