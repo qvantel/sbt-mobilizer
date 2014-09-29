@@ -96,7 +96,7 @@ class Deployer(
   private[this] def copyPackages(previousReleaseDirectories: Map[String, Option[String]]): Seq[Future[Unit]] = {
     for (hostname <- environment.hosts) yield {
       Future {
-        val target = s"$username@$hostname:$releaseDirectory/"
+        val target = s"${usernameFor(hostname)}@$hostname:$releaseDirectory/"
         log.info(s"[$moduleName] $hostname: Copying package ${mainPackage.getName} to $releaseDirectory")
         rsync(Seq(mainPackage.getPath), target, previousReleaseDirectories(hostname))
       }
@@ -106,7 +106,7 @@ class Deployer(
   private[this] def copyLibraries(previousReleaseDirectory: Map[String, Option[String]]): Seq[Future[Unit]] = {
     for (hostname <- environment.hosts) yield {
       Future {
-        val target = s"$username@$hostname:$libDirectory"
+        val target = s"${usernameFor(hostname)}@$hostname:$libDirectory"
         val jars = libraries ++ dependencies
         log.info(s"[$moduleName] $hostname: Copying libraries to $libDirectory")
         rsync(jars.map(_.getPath), target, previousReleaseDirectory(hostname).map(_ + "/lib/"))
@@ -206,7 +206,7 @@ object Deployer {
     }
   }
 
-  private[this] def connect(hostname: String, username: String = currentUser, port: Int = SSHClient.DEFAULT_PORT): SSHClient = {
+  private[this] def connect(hostname: String, username: String, port: Int = SSHClient.DEFAULT_PORT): SSHClient = {
     import collection.JavaConverters._
     new SSHClient tap { client =>
       client.loadKnownHosts()
@@ -218,7 +218,7 @@ object Deployer {
 
   private[this] def openConnections(environment: DeploymentEnvironment): Connections = {
     val connections = environment.hosts map { hostname =>
-      val client = connect(hostname, environment.username, environment.port)
+      val client = connect(hostname, environment.usernameFor(hostname), environment.port)
       val sftp   = client.newSFTPClient()
       (hostname, (client, sftp))
     }

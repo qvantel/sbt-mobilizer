@@ -7,7 +7,7 @@ import net.schmizz.sshj.SSHClient
 case class DeploymentEnvironment(
     hosts:                 Seq[String]    = Seq("localhost"),
     port:                  Int            = SSHClient.DEFAULT_PORT,
-    username:              String         = currentUser,
+    username:              Option[String] = None,
     rootDirectory:         String         = "/tmp/deploy",
     releasesDirectoryName: String         = "releases",
     currentDirectoryName:  String         = "current",
@@ -27,4 +27,6 @@ case class DeploymentEnvironment(
 
   def libDirectory(releaseId: String): String =
     s"${releaseDirectory(releaseId)}/$libDirectoryName"
+
+  def usernameFor(hostname: String) = username getOrElse util.usernameFor(hostname)
 }
