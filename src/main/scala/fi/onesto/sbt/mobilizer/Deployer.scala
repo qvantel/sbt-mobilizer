@@ -49,6 +49,7 @@ class Deployer(
   }
   private[this] val startupScriptFile = stringSourceFile(startupScriptName, startupScriptContent)
   private[this] val revisionFilePath = s"${environment.releaseDirectory(releaseId)}/REVISION"
+  private[this] val executableMode = Integer.parseInt("0775", 8)
 
   def run() {
     val previousReleaseDirectories = findPreviousReleaseDirectories()
@@ -136,7 +137,7 @@ class Deployer(
     log.info(s"[$moduleName] Creating startup script $startupScriptPath")
     for ((hostname, (ssh, sftp)) <- connections) {
       sftp.put(startupScriptFile, startupScriptPath)
-      sftp.chmod(startupScriptPath, 0775)
+      sftp.chmod(startupScriptPath, executableMode)
     }
   }
 

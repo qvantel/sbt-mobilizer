@@ -4,7 +4,7 @@ name := "mobilizer"
 
 organization := "fi.onesto.sbt"
 
-version := "0.0.4"
+version := "0.0.5"
 
 description := "Deployment plugin for SBT"
 
@@ -64,6 +64,6 @@ libraryDependencies ++= Seq(
   "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.8",
   "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.8",
   "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.8",
+  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.8" excludeAll(ExclusionRule(organization = "net.schmizz")),
   "commons-pool"            % "commons-pool"                % "1.6"
 )
