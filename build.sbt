@@ -1,10 +1,20 @@
+import bintray.Keys._
+
 sbtPlugin := true
 
-name := "mobilizer"
+scalaVersion := "2.10.4"
+
+sbtVersion := "0.13.5"
+
+name := "sbt-mobilizer"
+
+version := "0.0.5"
 
 organization := "fi.onesto.sbt"
 
-version := "0.0.5"
+organizationName := "Onesto Services Oy"
+
+organizationHomepage := Some(new java.net.URL("http://onesto.fi"))
 
 description := "Deployment plugin for SBT"
 
@@ -12,17 +22,19 @@ startYear := Some(2013)
 
 homepage := Some(url("https://github.com/onesto/sbt-mobilizer"))
 
+scmInfo := Some(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Some("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
 
-publishTo := Some(Classpaths.sbtPluginReleases) 
+bintrayPublishSettings
 
 publishMavenStyle := false
 
 publishArtifact in Test := false
 
+repository in bintray := "sbt-plugins"
 
-scalaVersion := "2.10.4"
+bintrayOrganization in bintray := Some("onesto")
 
-sbtVersion := "0.13.2"
+licenses += ("MIT", url("https://github.com/onesto/sbt-mobilizer/blob/master/LICENSE"))
 
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
