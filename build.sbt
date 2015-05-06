@@ -2,9 +2,9 @@ import bintray.Keys._
 
 sbtPlugin := true
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.5"
 
-sbtVersion := "0.13.5"
+sbtVersion := "0.13.8"
 
 name := "sbt-mobilizer"
 
@@ -68,14 +68,14 @@ scalacOptions in ThisBuild ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.github.nscala-time" %% "nscala-time"                 % "1.4.0",
-  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.51",
+  "com.github.nscala-time" %% "nscala-time"                 % "2.0.0",
+  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.52",
   "com.jcraft"              % "jzlib"                       % "1.1.3",
-  "org.slf4j"               % "slf4j-api"                   % "1.7.7",
+  "org.slf4j"               % "slf4j-api"                   % "1.7.12",
   "net.schmizz"             % "sshj"                        % "0.10.0",
-  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.8" excludeAll(ExclusionRule(organization = "net.schmizz")),
+  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.9" excludeAll(ExclusionRule(organization = "net.schmizz")),
   "commons-pool"            % "commons-pool"                % "1.6"
 )
