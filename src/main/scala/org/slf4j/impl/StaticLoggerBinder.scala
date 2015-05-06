@@ -7,7 +7,7 @@ import org.slf4j.spi.LoggerFactoryBinder
 
 
 final class StaticLoggerBinder(private[this] val sbtLoggerOption: Option[sbt.AbstractLogger]) extends LoggerFactoryBinder {
-  private val loggerFactory: ILoggerFactory = {
+  private[this] val loggerFactory: ILoggerFactory = {
     sbtLoggerOption map { sbtLogger =>
       new Slf4jSbtLoggerFactory(sbtLogger)
     } getOrElse {
@@ -21,7 +21,7 @@ final class StaticLoggerBinder(private[this] val sbtLoggerOption: Option[sbt.Abs
 }
 
 object StaticLoggerBinder {
-  private final var sbtLogger: Option[sbt.AbstractLogger] = None
+  private[this] final var sbtLogger: Option[sbt.AbstractLogger] = None
 
   final def getSingleton: StaticLoggerBinder = new StaticLoggerBinder(sbtLogger)
 

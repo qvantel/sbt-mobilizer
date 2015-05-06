@@ -5,27 +5,27 @@ import sbt.Level._
 import org.slf4j.Marker
 
 
-class Slf4jSbtLogger(
+final class Slf4jSbtLogger(
     private[this] val underlying: sbt.AbstractLogger,
     private[this] val name: String)
   extends org.slf4j.helpers.MarkerIgnoringBase {
 
-  private final val serialVersionUID: Long = 1L
+  private[this] final val serialVersionUID: Long = 1L
 
   override def isTraceEnabled: Boolean                 = underlying.atLevel(Debug)
   override def isTraceEnabled(marker: Marker): Boolean = underlying.atLevel(Debug)
 
-  private def fmt(str: String, arg: Any): String = {
+  private[this] def fmt(str: String, arg: Any): String = {
     val result = MessageFormatter.format(str, arg)
     Option(result.getThrowable).map{t => s"${result.getMessage}: $t"}.getOrElse(result.getMessage)
   }
 
-  private def fmt(str: String, arg1: Any, arg2: Any): String = {
+  private[this] def fmt(str: String, arg1: Any, arg2: Any): String = {
     val result = MessageFormatter.format(str, arg1, arg2)
     Option(result.getThrowable).map{t => s"${result.getMessage}: $t"}.getOrElse(result.getMessage)
   }
 
-  private def fmt(str: String, args: Seq[AnyRef]): String = {
+  private[this] def fmt(str: String, args: Seq[AnyRef]): String = {
     val result = MessageFormatter.arrayFormat(str, args.toArray)
     Option(result.getThrowable).map{t => s"${result.getMessage}: $t"}.getOrElse(result.getMessage)
   }

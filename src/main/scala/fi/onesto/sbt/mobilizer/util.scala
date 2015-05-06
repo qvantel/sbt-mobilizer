@@ -7,7 +7,7 @@ import net.schmizz.sshj.xfer.InMemorySourceFile
 object util {
   val currentUser = Option(System.getProperty("user.name")).getOrElse("root")
 
-  implicit class Tap[A](a: A) {
+  implicit final class Tap[A](val a: A) extends AnyVal {
     def tap[B](action: A => B): A = {
       action(a)
       a
