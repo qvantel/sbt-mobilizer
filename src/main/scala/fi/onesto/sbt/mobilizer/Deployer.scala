@@ -56,17 +56,10 @@ final class Deployer(
     try {
       createReleaseDirectory()
 
-      val packageCopyTask = copyPackages(previousReleaseDirectories)
-      val libraryCopyTask = copyLibraries(previousReleaseDirectories)
-      val copyTask = for {
-        _ <- packageCopyTask
-        _ <- libraryCopyTask
-      } yield ()
+      copyFiles(previousReleaseDirectories)
 
       createStartupScript()
       createRevisionFile()
-
-      Await.result(copyTask, Inf)
 
       updateSymlink()
 
@@ -100,6 +93,17 @@ final class Deployer(
         ssh.runShAndDiscard(runCheck, WithPty)
       }
     }
+  }
+
+  private[this] def copyFiles(previousReleaseDirectories: Map[String, Option[String]]): Unit = {
+    val packageCopyTask = copyPackages(previousReleaseDirectories)
+    val libraryCopyTask = copyLibraries(previousReleaseDirectories)
+    val copyTask = for {
+      _ <- packageCopyTask
+      _ <- libraryCopyTask
+    } yield ()
+
+    Await.result(copyTask, Inf)
   }
 
   private[this] def copyPackages(previousReleaseDirectories: Map[String, Option[String]]): Future[Unit] = {
