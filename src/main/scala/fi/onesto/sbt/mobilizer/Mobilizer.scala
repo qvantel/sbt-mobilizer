@@ -9,16 +9,22 @@ import sbt.classpath.ClasspathUtilities
 import sbt.complete.{Parsers, FixedSetExamples, Parser}
 
 
-object Mobilizer extends Plugin {
+object Mobilizer extends AutoPlugin {
+  import autoImport._
+
   type Connections = Map[String, (SSHClient, SFTPClient)]
   type Environments = Map[Symbol, DeploymentEnvironment]
 
-  val deployEnvironments = settingKey[Environments]("A map of deployment environments")
-  val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
-  val deployRevision     = taskKey[Option[String]]("The content of the REVISION file in the release directory")
-  val deploy             = inputKey[String]("Deploy to given environment")
+  object autoImport {
+    lazy val deployEnvironments = settingKey[Environments]("A map of deployment environments")
+    lazy val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
+    lazy val deployRevision     = taskKey[Option[String]]("The content of the REVISION file in the release directory")
+    lazy val deploy             = inputKey[String]("Deploy to given environment")
+  }
 
-  val deploySettings = Seq(
+  override val trigger = allRequirements
+
+  override lazy val projectSettings = Seq(
     deployEnvironments := Map.empty,
 
     deployDependencies := Seq.empty,
