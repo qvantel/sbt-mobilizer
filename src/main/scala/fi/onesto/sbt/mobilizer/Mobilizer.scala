@@ -30,7 +30,7 @@ object Mobilizer extends Plugin {
       val dependencies = deployDependencies.value.filter(ClasspathUtilities.isArchive)
       val testResults  = (Keys.test in Test).value
       val mainPackage  = (Keys.`package` in Compile).value
-      val mainClass    = (Keys.mainClass in Runtime).value getOrElse "Main"
+      val mainClass    = (Keys.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
       val libraries    = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
       val revision     = deployRevision.value
       val log          = Keys.streams.value.log
