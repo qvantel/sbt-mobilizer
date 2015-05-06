@@ -23,7 +23,12 @@ object Mobilizer extends Plugin {
 
     deployDependencies := Seq.empty,
 
+    deployRevision := None,
+
     deploy := {
+      val log = Keys.streams.value.log
+      StaticLoggerBinder.startSbt(log.asInstanceOf[AbstractLogger])
+
       val (environmentName, environment) = environmentParser(deployEnvironments.value).parsed
 
       val moduleName   = Keys.name.value
@@ -33,12 +38,9 @@ object Mobilizer extends Plugin {
       val mainClass    = (Keys.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
       val libraries    = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
       val revision     = deployRevision.value
-      val log          = Keys.streams.value.log
+      val releaseId    = generateReleaseId()
 
-      val releaseId = generateReleaseId()
-      StaticLoggerBinder.startSbt(log.asInstanceOf[AbstractLogger])
-
-      log.info(s"Deploying $moduleName to $environmentName")
+      log.info(s"Deploying $moduleName to $environmentName (${environment.hosts.mkString(", ")})")
 
       Deployer.run(
         moduleName   = moduleName,
@@ -51,12 +53,10 @@ object Mobilizer extends Plugin {
         libraries    = libraries,
         revision     = revision)
 
-      log.info(s"$moduleName deployed to $environmentName")
+      log.info(s"$moduleName deployed to $environmentName environment")
 
       releaseId
-    },
-
-    deployRevision := None
+    }
   )
 
   private[this] def environmentParser(available: Map[Symbol, DeploymentEnvironment]): Parser[(String, DeploymentEnvironment)] = {
