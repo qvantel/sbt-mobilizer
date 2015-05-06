@@ -49,10 +49,10 @@ package object mobilizer {
     }
 
     def runWithInput(commandName: String, input: String, args: String*): Iterator[String] =
-      runWithOptionalInput(commandName, Some(input), args: _*)
+      runWithOptionalInput(commandName, Option(input), args: _*)
 
     def runWithInputAndDiscard(commandName: String, input: String, args: String*): Unit = {
-      runWithOptionalInputAndDiscard(commandName, Some(input), args: _*)
+      runWithOptionalInputAndDiscard(commandName, Option(input), args: _*)
     }
 
     def runWithOptionalInput(commandName: String, inputOption: Option[String], args: String*): Iterator[String] = {

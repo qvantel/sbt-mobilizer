@@ -14,15 +14,15 @@ organization := "fi.onesto.sbt"
 
 organizationName := "Onesto Services Oy"
 
-organizationHomepage := Some(new java.net.URL("http://onesto.fi"))
+organizationHomepage := Option(new java.net.URL("http://onesto.fi"))
 
 description := "Deployment plugin for SBT"
 
-startYear := Some(2013)
+startYear := Option(2013)
 
-homepage := Some(url("https://github.com/onesto/sbt-mobilizer"))
+homepage := Option(url("https://github.com/onesto/sbt-mobilizer"))
 
-scmInfo := Some(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Some("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
+scmInfo := Option(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Option("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
 
 bintrayPublishSettings
 
@@ -32,7 +32,7 @@ publishArtifact in Test := false
 
 repository in bintray := "sbt-plugins"
 
-bintrayOrganization in bintray := Some("onesto")
+bintrayOrganization in bintray := Option("onesto")
 
 licenses += ("MIT", url("https://github.com/onesto/sbt-mobilizer/blob/master/LICENSE"))
 

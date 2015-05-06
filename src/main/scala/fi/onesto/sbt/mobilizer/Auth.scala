@@ -18,13 +18,13 @@ class Auth(client: SSHClient) {
 
   def agentConnector: Option[Connector] = {
     if (SSHAgentConnector.isConnectorAvailable) {
-      Some(new SSHAgentConnector(new JNAUSocketFactory))
+      Option(new SSHAgentConnector(new JNAUSocketFactory))
     }
     else if (PageantConnector.isConnectorAvailable) {
-      Some(new PageantConnector())
+      Option(new PageantConnector())
     }
     else {
-      None
+      Option.empty
     }
   }
 

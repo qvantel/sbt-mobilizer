@@ -206,7 +206,7 @@ final class Deployer(
 object Deployer {
   type Connections = Map[String, (SSHClient, SFTPClient)]
 
-  val DefaultCheckCommand = Some("true")
+  val DefaultCheckCommand = Option("true")
 
   val RsyncBaseOpts = Seq(
     "--checksum",

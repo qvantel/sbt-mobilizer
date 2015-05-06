@@ -37,7 +37,7 @@ Add this to your `build.sbt`:
     
     // If there's some kind of revision information available, you can store it into
     // the application's root directory as a REVISION file.
-    deployRevision := Some("1234")
+    deployRevision := Option("1234")
     // You can use, for example https://github.com/onesto/sbt-buildnumber to get a revision identifier:
     //deployRevision := decoratedBuildNumber.value 
 

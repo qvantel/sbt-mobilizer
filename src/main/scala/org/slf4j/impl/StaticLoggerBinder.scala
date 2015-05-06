@@ -30,7 +30,7 @@ object StaticLoggerBinder {
   private final val loggerFactoryClassStr: String = classOf[Slf4jSbtLoggerFactory].getName
 
   def startSbt(logger: sbt.AbstractLogger): Unit = {
-    sbtLogger = Some(logger)
+    sbtLogger = Option(logger)
     SneakySbtLoggerHelper.reset()
   }
 }
