@@ -52,9 +52,10 @@ final class Deployer(
   private[this] val executableMode = Integer.parseInt("0775", 8)
 
   def run(): Unit = {
-    val previousReleaseDirectories = findPreviousReleaseDirectories()
     try {
       createReleaseDirectory()
+
+      val previousReleaseDirectories = findPreviousReleaseDirectories()
 
       copyFiles(previousReleaseDirectories)
 
