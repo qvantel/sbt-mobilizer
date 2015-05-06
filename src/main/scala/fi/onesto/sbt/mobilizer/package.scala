@@ -28,7 +28,7 @@ package object mobilizer {
     def run(commandName: String, args: String*): Iterator[String] =
       runWithOptionalInput(commandName, None, args: _*)
 
-    def runShAndDiscard(commandLine: String, requestPty: RequestPty = NoPty) {
+    def runShAndDiscard(commandLine: String, requestPty: RequestPty = NoPty): Unit = {
       withSession { session =>
         if (requestPty == WithPty)
           session.allocateDefaultPTY()
@@ -44,14 +44,14 @@ package object mobilizer {
       }
     }
 
-    def runAndDiscard(commandName: String, args: String*) {
+    def runAndDiscard(commandName: String, args: String*): Unit = {
       runWithOptionalInputAndDiscard(commandName, None, args: _*)
     }
 
     def runWithInput(commandName: String, input: String, args: String*): Iterator[String] =
       runWithOptionalInput(commandName, Some(input), args: _*)
 
-    def runWithInputAndDiscard(commandName: String, input: String, args: String*) {
+    def runWithInputAndDiscard(commandName: String, input: String, args: String*): Unit = {
       runWithOptionalInputAndDiscard(commandName, Some(input), args: _*)
     }
 
@@ -73,7 +73,7 @@ package object mobilizer {
       }
     }
 
-    def runWithOptionalInputAndDiscard(commandName: String, inputOption: Option[String], args: String*) {
+    def runWithOptionalInputAndDiscard(commandName: String, inputOption: Option[String], args: String*): Unit = {
       withSession { session =>
         val command = session.exec(shellQuote(commandName, args: _*))
         inputOption foreach { input =>
@@ -91,11 +91,11 @@ package object mobilizer {
       }
     }
 
-    def symlink(source: String, destination: String) {
+    def symlink(source: String, destination: String): Unit = {
       runAndDiscard("ln", "-nsf", source, destination)
     }
 
-    def rmTree(path: String) {
+    def rmTree(path: String): Unit = {
       runAndDiscard("rm", "-rf", path)
     }
   }

@@ -4,7 +4,7 @@ import util._
 import net.schmizz.sshj.SSHClient
 
 
-case class DeploymentEnvironment(
+final case class DeploymentEnvironment(
     hosts:                 Seq[String]    = Seq("localhost"),
     port:                  Int            = SSHClient.DEFAULT_PORT,
     username:              String         = currentUser,

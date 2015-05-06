@@ -7,7 +7,7 @@ import org.slf4j.Marker
 
 class Slf4jSbtLogger(
     private[this] val underlying: sbt.AbstractLogger,
-    override private[this] val name: String)
+    private[this] val name: String)
   extends org.slf4j.helpers.MarkerIgnoringBase {
 
   private final val serialVersionUID: Long = 1L

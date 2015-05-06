@@ -14,10 +14,12 @@ object Mobilizer extends Plugin {
 
   val deployEnvironments = settingKey[Environments]("A map of deployment environments")
   val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
-  val deployRevision = taskKey[Option[String]]("The content of the REVISION file in the release directory")
-  val deploy = inputKey[String]("Deploy to given environment")
+  val deployRevision     = taskKey[Option[String]]("The content of the REVISION file in the release directory")
+  val deploy             = inputKey[String]("Deploy to given environment")
 
   val deploySettings = Seq(
+    deployEnvironments := Map.empty,
+
     deployDependencies := Seq.empty,
 
     deploy := {
@@ -64,7 +66,7 @@ object Mobilizer extends Plugin {
       .map { name => (name, available(Symbol(name))) }
   }
 
-  private[this] def generateReleaseId() = {
+  private[this] def generateReleaseId(): String = {
     import java.text.SimpleDateFormat
     import java.util.Date
     val fmt = new SimpleDateFormat("yyyyMMddHHmmss")
