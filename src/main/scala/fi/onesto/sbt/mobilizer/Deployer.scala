@@ -2,9 +2,8 @@ package fi.onesto.sbt.mobilizer
 
 import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.ExecutionContext.Implicits.global
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import sbt._
@@ -22,7 +21,8 @@ final class Deployer(
     dependencies: Seq[sbt.File],
     libraries:    Seq[sbt.File],
     revision:     Option[String],
-    connections:  Deployer.Connections) {
+    connections:  Deployer.Connections)
+   (implicit ec:  ExecutionContext) {
   import Deployer._
 
   import environment.{username, currentDirectory, releasesRoot, restartCommand, checkCommand}
@@ -221,7 +221,8 @@ object Deployer {
           mainClass:    String,
           dependencies: Seq[sbt.File],
           libraries:    Seq[sbt.File],
-          revision:     Option[String]): Unit = {
+          revision:     Option[String])
+         (implicit ec:  ExecutionContext): Unit = {
     val connections = openConnections(environment)
     try {
       val deployer = new Deployer(moduleName, releaseId, log, environment, mainPackage, mainClass, dependencies, libraries, revision, connections)

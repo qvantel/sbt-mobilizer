@@ -1,11 +1,12 @@
 package fi.onesto.sbt.mobilizer
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.slf4j.impl.StaticLoggerBinder
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import sbt._
 import sbt.classpath.ClasspathUtilities
-import sbt.complete.{Parsers, FixedSetExamples, Parser, ExampleSource}
+import sbt.complete.{Parsers, FixedSetExamples, Parser}
 
 
 object Mobilizer extends Plugin {
