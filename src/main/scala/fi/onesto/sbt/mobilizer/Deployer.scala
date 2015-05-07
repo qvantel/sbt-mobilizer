@@ -262,7 +262,8 @@ object Deployer {
   val RsyncBaseOpts = Seq(
     "--checksum",
     "--times",
-    "--compress")
+    "--compress",
+    "--rsh=ssh -o ControlMaster=no")
 
   def run(moduleName:   String,
           releaseId:    String,
