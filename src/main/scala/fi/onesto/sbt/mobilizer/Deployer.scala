@@ -297,13 +297,16 @@ object Deployer {
     }
   }
 
-  private[this] def openConnections(environment: DeploymentEnvironment): Connections = {
-    val connections = environment.hosts map { hostname =>
-      val client = connect(hostname, environment.username, environment.port)
-      val sftp   = client.newSFTPClient()
-      (hostname, (client, sftp))
+  private[this] def openConnections(environment: DeploymentEnvironment)(implicit ec: ExecutionContext): Connections = {
+    val eventualConnections = Future sequence {
+      environment.hosts map { hostname =>
+        for {
+          client <- Future(connect(hostname, environment.username, environment.port))
+          sftp   <- Future(client.newSFTPClient())
+        } yield (hostname, (client, sftp))
+      }
     }
-    connections.toMap
+    Await.result(eventualConnections, Inf).toMap
   }
 
   private[this] def closeConnections(connections: Connections): Unit = {
