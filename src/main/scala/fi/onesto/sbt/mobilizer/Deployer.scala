@@ -95,11 +95,14 @@ final class Deployer(
           ssh.runShAndDiscard(runRestart, WithPty)
         } catch { case e: SSHException =>
           logger.error(hostname, s"Error restarting: ${e.getMessage}")
+          throw e
         }
+        logger.info(hostname, "Checking for successful startup")
         try {
           ssh.runShAndDiscard(runCheck, WithPty)
         } catch { case e: SSHException =>
           logger.error(hostname, s"Startup check failed: ${e.getMessage}")
+          throw e
         }
       }
     }
