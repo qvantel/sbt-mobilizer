@@ -4,47 +4,53 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.slf4j.impl.StaticLoggerBinder
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
-import sbt._
+import sbt.{Keys => SK, _}
 import sbt.classpath.ClasspathUtilities
 import sbt.complete.{Parsers, FixedSetExamples, Parser}
 
 
 object Mobilizer extends AutoPlugin {
-  import autoImport._
+  import Keys._
 
   type Connections = Map[String, (SSHClient, SFTPClient)]
   type Environments = Map[Symbol, DeploymentEnvironment]
 
-  object autoImport {
+  object Keys {
     lazy val deployEnvironments = settingKey[Environments]("A map of deployment environments")
-    lazy val deployDependencies = taskKey[Seq[File]]("Dependencies for deployment")
     lazy val deployRevision     = taskKey[Option[String]]("The content of the REVISION file in the release directory")
     lazy val deploy             = inputKey[String]("Deploy to given environment")
   }
+
+  val autoImport = Keys
 
   override val trigger = allRequirements
 
   override lazy val projectSettings = Seq(
     deployEnvironments := Map.empty,
 
-    deployDependencies := Seq.empty,
-
     deployRevision := None,
 
     deploy := {
-      val log = Keys.streams.value.log
+      val log = SK.streams.value.log
       StaticLoggerBinder.startSbt(log.asInstanceOf[AbstractLogger])
 
       val (environmentName, environment) = environmentParser(deployEnvironments.value).parsed
 
-      val moduleName   = Keys.name.value
-      val dependencies = deployDependencies.value.filter(ClasspathUtilities.isArchive)
-      val testResults  = (Keys.test in Test).value
-      val mainPackage  = (Keys.`package` in Compile).value
-      val mainClass    = (Keys.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
-      val libraries    = (Keys.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
-      val revision     = deployRevision.value
-      val releaseId    = generateReleaseId()
+      val currentState    = SK.state.value
+      val moduleName      = SK.name.value
+      val dependencyTasks = SK.thisProject.value.dependencies.map(SK.`package` in Compile in _.project)
+      val dependencies    = dependencyTasks map { dependencyTask =>
+        Project.runTask(dependencyTask, currentState) match {
+          case Some((_, Value(f))) => f
+          case _                   => sys.error(s"Failed to package dependency $dependencyTask")
+        }
+      }
+      val testResults     = (SK.test in Test).value
+      val mainPackage     = (SK.`package` in Compile).value
+      val mainClass       = (SK.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
+      val libraries       = (SK.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
+      val revision        = deployRevision.value
+      val releaseId       = generateReleaseId()
 
       log.info(s"Deploying $moduleName to $environmentName (${environment.hosts.mkString(", ")})")
 
