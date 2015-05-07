@@ -11,8 +11,7 @@ import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import util._
 
 
-class Auth(client: SSHClient) {
-  val sshDirectory = new File(currentUser, ".ssh")
+final class Auth(client: SSHClient) {
   val idTypes = List("id_ecdsa", "id_rsa", "id_dsa")
   val keyFiles = idTypes.map(new File(sshDirectory, _)).filter(_.exists())
 
