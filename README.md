@@ -20,7 +20,7 @@ Installation
 
 Add to your `project/plugins.sbt`:
 
-    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.0.6")
+    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.1.0")
 
 
 Usage
@@ -30,10 +30,6 @@ Add this to your `build.sbt`:
 
     // Enable sbt-mobilizer.
     deploySettings
-    
-    // If the project has multiple modules, you'll need to declare the
-    // dependencies to other modules explicitly.
-    deployDependencies := Seq((Keys.`package` in Compile in sharedModule).value)
     
     // If there's some kind of revision information available, you can store it into
     // the application's root directory as a REVISION file.
