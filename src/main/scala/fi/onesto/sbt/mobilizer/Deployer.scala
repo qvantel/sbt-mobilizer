@@ -2,27 +2,28 @@ package fi.onesto.sbt.mobilizer
 
 import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.ExecutionContext.Implicits.global
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.common.SSHException
 import net.schmizz.sshj.sftp.SFTPClient
 import sbt._
 
 import util._
 
 
-class Deployer(
+final class Deployer(
     moduleName:   String,
     releaseId:    String,
-    log:          sbt.Logger,
+    sbtLogger:    sbt.Logger,
     environment:  DeploymentEnvironment,
     mainPackage:  sbt.File,
     mainClass:    String,
     dependencies: Seq[sbt.File],
     libraries:    Seq[sbt.File],
     revision:     Option[String],
-    connections:  Deployer.Connections) {
+    connections:  Deployer.Connections)
+   (implicit ec:  ExecutionContext) {
   import Deployer._
 
   import environment.{username, currentDirectory, releasesRoot, restartCommand, checkCommand}
@@ -51,19 +52,16 @@ class Deployer(
   private[this] val revisionFilePath = s"${environment.releaseDirectory(releaseId)}/REVISION"
   private[this] val executableMode = Integer.parseInt("0775", 8)
 
-  def run() {
-    val previousReleaseDirectories = findPreviousReleaseDirectories()
+  def run(): Unit = {
     try {
       createReleaseDirectory()
 
-      val packageCopyTasks = copyPackages(previousReleaseDirectories)
-      val libraryCopyTasks = copyLibraries(previousReleaseDirectories)
-      val copyTask = Future.sequence(packageCopyTasks ++ libraryCopyTasks)
+      val previousReleaseDirectories = findPreviousReleaseDirectories()
+
+      copyFiles(previousReleaseDirectories)
 
       createStartupScript()
       createRevisionFile()
-
-      Await.result(copyTask, Inf)
 
       updateSymlink()
 
@@ -72,10 +70,10 @@ class Deployer(
       } catch { case NonFatal(e) =>
         restoreSymlink(previousReleaseDirectories)
         try {
-          log.warn("Restarting previous release after a rollback")
+          logger.warn("Restarting previous release after a rollback")
           restart()
         } catch { case NonFatal(re) =>
-          log.error(s"Failed to restart after rolling back to previous release: $re")
+          logger.error(s"Failed to restart after rolling back to previous release: $re")
         }
         throw e
       }
@@ -85,124 +83,190 @@ class Deployer(
     }
   }
 
-  private[this] def restart() {
-    for (runRestart <- restartCommand;
-         runCheck   <- checkCommand orElse DefaultCheckCommand) {
+  private[this] def restart(): Unit = {
+    for {
+      runRestart <- restartCommand
+      runCheck   <- checkCommand orElse DefaultCheckCommand
+    } yield {
       for (hostname <- environment.hosts) {
         val (ssh, _) = connections(hostname)
-        log.info(s"Restarting on $hostname")
-        ssh.runShAndDiscard(runRestart, WithPty)
-        ssh.runShAndDiscard(runCheck, WithPty)
+        logger.info(hostname, "Restarting")
+        try {
+          ssh.runShAndDiscard(runRestart, WithPty)
+        } catch { case e: SSHException =>
+          logger.error(hostname, s"Error restarting: ${e.getMessage}")
+          throw e
+        }
+        logger.info(hostname, "Checking for successful startup")
+        try {
+          ssh.runShAndDiscard(runCheck, WithPty)
+        } catch { case e: SSHException =>
+          logger.error(hostname, s"Startup check failed: ${e.getMessage}")
+          throw e
+        }
       }
     }
   }
 
-  private[this] def copyPackages(previousReleaseDirectories: Map[String, Option[String]]): Seq[Future[Unit]] = {
-    for (hostname <- environment.hosts) yield {
-      Future {
-        val target = s"$username@$hostname:$releaseDirectory/"
-        log.info(s"[$moduleName] $hostname: Copying package ${mainPackage.getName} to $releaseDirectory")
-        rsync(Seq(mainPackage.getPath), target, previousReleaseDirectories(hostname))
-      }
-    }
+  private[this] def copyFiles(previousReleaseDirectories: Map[String, Option[String]]): Unit = {
+    val packageCopyTask = copyPackages(previousReleaseDirectories)
+    val libraryCopyTask = copyLibraries(previousReleaseDirectories)
+    val copyTask = for {
+      _ <- packageCopyTask
+      _ <- libraryCopyTask
+    } yield ()
+
+    Await.result(copyTask, Inf)
   }
 
-  private[this] def copyLibraries(previousReleaseDirectory: Map[String, Option[String]]): Seq[Future[Unit]] = {
-    for (hostname <- environment.hosts) yield {
-      Future {
-        val target = s"$username@$hostname:$libDirectory"
-        val jars = libraries ++ dependencies
-        log.info(s"[$moduleName] $hostname: Copying libraries to $libDirectory")
-        rsync(jars.map(_.getPath), target, previousReleaseDirectory(hostname).map(_ + "/lib/"))
+  private[this] def copyPackages(previousReleaseDirectories: Map[String, Option[String]]): Future[Unit] = {
+    Future sequence {
+      for (hostname <- environment.hosts) yield {
+        Future {
+          val target = s"$username@$hostname:$releaseDirectory/"
+          logger.info(hostname, s"Copying package ${mainPackage.getName} to $releaseDirectory")
+          rsync(Seq(mainPackage.getPath), target, previousReleaseDirectories(hostname))
+        }
       }
-    }
+    } map (_ => ())
   }
 
-  private[this] def rsync(sources: Seq[String], target: String, linkDest: Option[String] = None) {
+  private[this] def copyLibraries(previousReleaseDirectory: Map[String, Option[String]]): Future[Unit] = {
+    Future sequence {
+      for (hostname <- environment.hosts) yield {
+        Future {
+          val target = s"$username@$hostname:$libDirectory"
+          val jars = libraries ++ dependencies
+          logger.info(hostname, s"Copying libraries to $libDirectory")
+          rsync(jars.map(_.getPath), target, previousReleaseDirectory(hostname).map(_ + "/lib/"))
+        }
+      }
+    } map (_ => ())
+  }
+
+  private[this] def rsync(sources: Seq[String], target: String, linkDest: Option[String] = None): Unit = {
     val linkDestOpt = linkDest.map("--link-dest=" + _).toList
     val rsyncOpts = RsyncBaseOpts ++ environment.rsyncOpts ++ linkDestOpt
     val command = environment.rsyncCommand +: (rsyncOpts ++ sources) :+ target
-    log.debug(s"[$moduleName] Running rsync command: $command")
-    Process(command) ! log
+    logger.debug(s"Running rsync command: $command")
+    Process(command) ! sbtLogger
   }
 
-  private[this] def createReleaseDirectory() {
-    log.info(s"[$moduleName] Creating release directory $releaseDirectory")
+  private[this] def createReleaseDirectory(): Unit = {
+    logger.info(s"Creating release directory $releaseDirectory")
     for ((hostname, (ssh, sftp)) <- connections) {
-      sftp.mkdirs(releaseDirectory)
+      try {
+        sftp.mkdirs(releaseDirectory)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Could not create release directory $releaseDirectory: ${e.getMessage}")
+        throw e
+      }
     }
   }
 
-  private[this] def createStartupScript() {
-    log.info(s"[$moduleName] Creating startup script $startupScriptPath")
+  private[this] def createStartupScript(): Unit = {
+    logger.info(s"Creating startup script $startupScriptPath")
     for ((hostname, (ssh, sftp)) <- connections) {
-      sftp.put(startupScriptFile, startupScriptPath)
-      sftp.chmod(startupScriptPath, executableMode)
+      try {
+        sftp.put(startupScriptFile, startupScriptPath)
+        sftp.chmod(startupScriptPath, executableMode)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Error creating startup script $startupScriptPath: ${e.getMessage}")
+        throw e
+      }
     }
   }
 
-  private[this] def createRevisionFile() {
+  private[this] def createRevisionFile(): Unit = {
     revision map { content =>
-      log.info(s"[$moduleName] Creating revision file $revisionFilePath")
-      for ((hostname, (ssh, sftp)) <- connections) {
-        sftp.put(stringSourceFile("REVISION", content), revisionFilePath)
+      logger.info(s"Creating revision file $revisionFilePath")
+      for ((hostname, (ssh, sftp)) <- connections) yield {
+        try {
+          sftp.put(stringSourceFile("REVISION", content), revisionFilePath)
+        } catch { case e: SSHException =>
+          logger.error(hostname, s"Error creating REVISION file: ${e.getMessage}")
+          throw e
+        }
       }
     } getOrElse {
-      log.warn(s"[$moduleName] Revision information not available, not creating $revisionFilePath")
+      logger.info(s"Revision information not available, not creating $revisionFilePath")
     }
   }
 
-  private[this] def updateSymlink() {
-    log.info(s"[$moduleName] Setting “current” symlink to $releaseDirectory")
-    for ((_, (ssh, _)) <- connections) {
-      ssh.symlink(releaseDirectory, currentDirectory)
+  private[this] def updateSymlink(): Unit = {
+    logger.info(s"Setting “current” symlink to $releaseDirectory")
+    for ((hostname, (ssh, _)) <- connections) {
+      try {
+        ssh.symlink(releaseDirectory, currentDirectory)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Error setting “current” symlink: ${e.getMessage}")
+        throw e
+      }
     }
   }
 
   private[this] def findPreviousReleaseDirectories(): Map[String, Option[String]] = {
     val results = for ((hostname, (ssh, sftp)) <- connections) yield {
-      hostname -> sftp.ls(releasesRoot).asScala.filter(_.isDirectory).sortBy(_.getName).lastOption.map(_.getPath)
+      hostname -> (try {
+        sftp.ls(releasesRoot).asScala.filter(_.isDirectory).sortBy(_.getName).lastOption.map(_.getPath)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Could not find list of previous releases: ${e.getMessage}")
+        throw e
+      })
     }
     results.toMap
   }
 
-  private[this] def restoreSymlinkOn(hostname: String, previousReleaseDirectoryOption: Option[String]) {
-    log.info(s"[$moduleName] Restoring “current” symlink to previous release")
-    previousReleaseDirectoryOption map { previousReleaseDirectory =>
-      val (ssh, _) = connections(hostname)
-      ssh.symlink(previousReleaseDirectory, currentDirectory)
-      log.info(s"Restored “current” symlink on $hostname to $previousReleaseDirectory")
-    }
-  }
-
-  private[this] def restoreSymlink(previousReleaseDirectories: Map[String, Option[String]]) {
-    log.info(s"[$moduleName] Restoring “current” symlink to previous release")
-    previousReleaseDirectories map { case (hostname, previousDirectoryOption) =>
-      previousDirectoryOption map { previousDirectory =>
+  private[this] def restoreSymlink(previousReleaseDirectories: Map[String, Option[String]]): Unit = {
+    logger.info(s"Restoring “current” symlink to previous release")
+    previousReleaseDirectories foreach { case (hostname, previousDirectoryOption) =>
+      previousDirectoryOption foreach { previousDirectory =>
         val (ssh, _) = connections(hostname)
-        ssh.symlink(previousDirectory, currentDirectory)
-        log.info(s"Restored “current” symlink on $hostname to $previousDirectory")
+        try {
+          ssh.symlink(previousDirectory, currentDirectory)
+          logger.info(hostname, s"Restored “current” symlink to $previousDirectory")
+        } catch { case e: SSHException =>
+          logger.error(hostname, s"Error restoring “current” symlink: ${e.getMessage}")
+          throw e
+        }
       }
     }
   }
 
-  private[this] def removeThisRelease() {
-    log.warn(s"[$moduleName] Removing release directory $releaseDirectory")
+  private[this] def removeThisRelease(): Unit = {
+    logger.warn(s"Removing release directory $releaseDirectory")
     for ((hostname, (ssh, sftp)) <- connections) {
-      ssh.rmTree(releaseDirectory)
+      try {
+        ssh.rmTree(releaseDirectory)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Error removing release directory $releaseDirectory: ${e.getMessage}")
+        throw e
+      }
     }
+  }
+
+  private[this] object logger {
+    final def debug(message: => String): Unit = sbtLogger.debug(s"[$moduleName] $message")
+    final def info(message: => String): Unit = sbtLogger.info(s"[$moduleName] $message")
+    final def warn(message: => String): Unit = sbtLogger.warn(s"[$moduleName] $message")
+    final def error(message: => String): Unit = sbtLogger.error(s"[$moduleName] $message")
+    final def debug(hostname: => String, message: => String): Unit = sbtLogger.debug(s"[$moduleName] on $hostname: $message")
+    final def info(hostname: => String, message: => String): Unit = sbtLogger.info(s"[$moduleName] on $hostname: $message")
+    final def warn(hostname: => String, message: => String): Unit = sbtLogger.warn(s"[$moduleName] on $hostname: $message")
+    final def error(hostname: => String, message: => String): Unit = sbtLogger.error(s"[$moduleName] on $hostname: $message")
   }
 }
 
 object Deployer {
   type Connections = Map[String, (SSHClient, SFTPClient)]
 
-  val DefaultCheckCommand = Some("true")
+  val DefaultCheckCommand = Option("true")
 
   val RsyncBaseOpts = Seq(
     "--checksum",
     "--times",
-    "--compress")
+    "--compress",
+    "--rsh=ssh -o ControlMaster=no")
 
   def run(moduleName:   String,
           releaseId:    String,
@@ -212,7 +276,8 @@ object Deployer {
           mainClass:    String,
           dependencies: Seq[sbt.File],
           libraries:    Seq[sbt.File],
-          revision:     Option[String]) {
+          revision:     Option[String])
+         (implicit ec:  ExecutionContext): Unit = {
     val connections = openConnections(environment)
     try {
       val deployer = new Deployer(moduleName, releaseId, log, environment, mainPackage, mainClass, dependencies, libraries, revision, connections)
@@ -232,16 +297,19 @@ object Deployer {
     }
   }
 
-  private[this] def openConnections(environment: DeploymentEnvironment): Connections = {
-    val connections = environment.hosts map { hostname =>
-      val client = connect(hostname, environment.username, environment.port)
-      val sftp   = client.newSFTPClient()
-      (hostname, (client, sftp))
+  private[this] def openConnections(environment: DeploymentEnvironment)(implicit ec: ExecutionContext): Connections = {
+    val eventualConnections = Future sequence {
+      environment.hosts map { hostname =>
+        for {
+          client <- Future(connect(hostname, environment.username, environment.port))
+          sftp   <- Future(client.newSFTPClient())
+        } yield (hostname, (client, sftp))
+      }
     }
-    connections.toMap
+    Await.result(eventualConnections, Inf).toMap
   }
 
-  private[this] def closeConnections(connections: Connections) {
+  private[this] def closeConnections(connections: Connections): Unit = {
     for ((_, (ssh, sftp)) <- connections) {
       sftp.close()
       ssh.close()

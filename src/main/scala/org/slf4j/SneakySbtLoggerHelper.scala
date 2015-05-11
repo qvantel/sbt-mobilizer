@@ -2,7 +2,7 @@ package org.slf4j
 
 
 object SneakySbtLoggerHelper {
-  def reset() {
+  def reset(): Unit = {
     LoggerFactory.reset()
   }
 }

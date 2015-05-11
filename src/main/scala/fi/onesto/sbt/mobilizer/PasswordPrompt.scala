@@ -7,7 +7,7 @@ import util._
 
 
 class PasswordPrompt(client: SSHClient) extends PasswordFinder {
-  private var tries = 0
+  private[this] var tries = 0
 
   def reqPassword(resource: Resource[_]): Array[Char] = {
     System.console().readPassword(client.getRemoteHostname + " Password: ") tap { _ =>

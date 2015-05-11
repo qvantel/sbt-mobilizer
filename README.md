@@ -18,14 +18,9 @@ The startup script starts the application in the foreground.
 Installation
 ------------
 
-If you do not have it already, create a `project/project/Plugins.scala` with content like:
- 
-    import sbt._
-    
-    object Plugins extends Build {
-      lazy val sbtMobilizerPlugin = uri("git://github.com/onesto/sbt-mobilizer.git")
-      lazy val plugins = Project("plugins", file(".")).dependsOn(sbtMobilizerPlugin)
-    }
+Add to your `project/plugins.sbt`:
+
+    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.0.6")
 
 
 Usage
@@ -33,19 +28,27 @@ Usage
 
 Add this to your `build.sbt`:
 
-    // enable sbt-mobilizer
+    // Enable sbt-mobilizer.
     deploySettings
     
-    // if the project has multiple modules, you'll need to declare the
-    // dependencies to other modules explicitly
+    // If the project has multiple modules, you'll need to declare the
+    // dependencies to other modules explicitly.
     deployDependencies := Seq((Keys.`package` in Compile in sharedModule).value)
     
-    // define deployment environments see
+    // If there's some kind of revision information available, you can store it into
+    // the application's root directory as a REVISION file.
+    deployRevision := Option("1234")
+    // You can use, for example https://github.com/onesto/sbt-buildnumber to get a revision identifier:
+    //deployRevision := decoratedBuildNumber.value 
+
+    // Define deployment environments.
+    import fi.onesto.sbt.mobilizer.DeploymentEnvironment
+
     deployEnvironments := Map(
-      'staging -> fi.onesto.sbt.mobilizer.DeploymentEnvironment(
+      'staging    -> DeploymentEnvironment(
         hosts         = Seq("staging.example.com"),
         rootDirectory = "/opt/myapp"),
-      'production -> fi.onesto.sbt.mobilizer.DeploymentEnvironment(
+      'production -> DeploymentEnvironment(
         hosts         = Seq("production.example.com"),
         rootDirectory = "/opt/myapp"))
 

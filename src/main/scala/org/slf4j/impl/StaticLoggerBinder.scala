@@ -1,15 +1,21 @@
 package org.slf4j.impl
 
-import fi.onesto.sbt.mobilizer.Slf4jSbtLoggerFactory
+import sbt.Level
 import org.slf4j.{ILoggerFactory, SneakySbtLoggerHelper}
 import org.slf4j.helpers.NOPLoggerFactory
 import org.slf4j.spi.LoggerFactoryBinder
 
+import fi.onesto.sbt.mobilizer.Slf4jSbtLoggerFactory
 
-final class StaticLoggerBinder(private[this] val sbtLoggerOption: Option[sbt.AbstractLogger]) extends LoggerFactoryBinder {
-  private val loggerFactory: ILoggerFactory = {
+
+final class StaticLoggerBinder(
+    private[this] val sbtLoggerOption: Option[sbt.AbstractLogger],
+    private[this] val minimumLevel:    Level.Value)
+  extends LoggerFactoryBinder {
+
+  private[this] val loggerFactory: ILoggerFactory = {
     sbtLoggerOption map { sbtLogger =>
-      new Slf4jSbtLoggerFactory(sbtLogger)
+      new Slf4jSbtLoggerFactory(sbtLogger, minimumLevel)
     } getOrElse {
       new NOPLoggerFactory
     }
@@ -21,16 +27,16 @@ final class StaticLoggerBinder(private[this] val sbtLoggerOption: Option[sbt.Abs
 }
 
 object StaticLoggerBinder {
-  private final var sbtLogger: Option[sbt.AbstractLogger] = None
+  private[this] final var sbtLogger: Option[sbt.AbstractLogger] = None
 
-  final def getSingleton: StaticLoggerBinder = new StaticLoggerBinder(sbtLogger)
+  final def getSingleton: StaticLoggerBinder = new StaticLoggerBinder(sbtLogger, Level.Warn)
 
   final val REQUESTED_API_VERSION: String = "1.6.99"
 
   private final val loggerFactoryClassStr: String = classOf[Slf4jSbtLoggerFactory].getName
 
-  def startSbt(logger: sbt.AbstractLogger) {
-    sbtLogger = Some(logger)
+  def startSbt(logger: sbt.AbstractLogger): Unit = {
+    sbtLogger = Option(logger)
     SneakySbtLoggerHelper.reset()
   }
 }

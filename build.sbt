@@ -2,27 +2,27 @@ import bintray.Keys._
 
 sbtPlugin := true
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.5"
 
-sbtVersion := "0.13.5"
+sbtVersion := "0.13.8"
 
 name := "sbt-mobilizer"
 
-version := "0.0.6"
+version := "0.1.0"
 
 organization := "fi.onesto.sbt"
 
 organizationName := "Onesto Services Oy"
 
-organizationHomepage := Some(new java.net.URL("http://onesto.fi"))
+organizationHomepage := Option(new java.net.URL("http://onesto.fi"))
 
 description := "Deployment plugin for SBT"
 
-startYear := Some(2013)
+startYear := Option(2013)
 
-homepage := Some(url("https://github.com/onesto/sbt-mobilizer"))
+homepage := Option(url("https://github.com/onesto/sbt-mobilizer"))
 
-scmInfo := Some(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Some("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
+scmInfo := Option(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Option("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
 
 bintrayPublishSettings
 
@@ -32,7 +32,7 @@ publishArtifact in Test := false
 
 repository in bintray := "sbt-plugins"
 
-bintrayOrganization in bintray := Some("onesto")
+bintrayOrganization in bintray := Option("onesto")
 
 licenses += ("MIT", url("https://github.com/onesto/sbt-mobilizer/blob/master/LICENSE"))
 
@@ -68,14 +68,14 @@ scalacOptions in ThisBuild ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.github.nscala-time" %% "nscala-time"                 % "1.4.0",
-  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.51",
+  "com.github.nscala-time" %% "nscala-time"                 % "2.0.0",
+  "org.bouncycastle"        % "bcprov-jdk15on"              % "1.52",
   "com.jcraft"              % "jzlib"                       % "1.1.3",
-  "org.slf4j"               % "slf4j-api"                   % "1.7.7",
+  "org.slf4j"               % "slf4j-api"                   % "1.7.12",
   "net.schmizz"             % "sshj"                        % "0.10.0",
-  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.8",
-  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.8" excludeAll(ExclusionRule(organization = "net.schmizz")),
+  "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.9",
+  "com.jcraft"              % "jsch.agentproxy.sshj"        % "0.0.9" excludeAll(ExclusionRule(organization = "net.schmizz")),
   "commons-pool"            % "commons-pool"                % "1.6"
 )
