@@ -20,17 +20,16 @@ Installation
 
 Add to your `project/plugins.sbt`:
 
-    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.1.0")
+    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.1.1")
 
 
 Usage
 -----
 
-Add this to your `build.sbt`:
+Enable the plugin according the [SBT documentation](http://www.scala-sbt.org/0.13/docs/Plugins.html).
 
-    // Enable sbt-mobilizer.
-    deploySettings
-    
+Then add this to your `build.sbt`:
+
     // If there's some kind of revision information available, you can store it into
     // the application's root directory as a REVISION file.
     deployRevision := Option("1234")

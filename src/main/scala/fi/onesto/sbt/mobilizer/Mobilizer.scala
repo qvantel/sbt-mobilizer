@@ -23,11 +23,9 @@ object Mobilizer extends AutoPlugin {
 
   val autoImport = Keys
 
-  override val trigger = allRequirements
+  override val trigger = noTrigger
 
   override lazy val projectSettings = Seq(
-    deployEnvironments := Map.empty,
-
     deployRevision := None,
 
     deploy := {
