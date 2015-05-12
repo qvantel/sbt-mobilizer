@@ -1,5 +1,3 @@
-import bintray.Keys._
-
 sbtPlugin := true
 
 scalaVersion := "2.10.5"
@@ -24,15 +22,11 @@ homepage := Option(url("https://github.com/onesto/sbt-mobilizer"))
 
 scmInfo := Option(ScmInfo(new java.net.URL("https://github.com/onesto/sbt-mobilizer"), "scm:git:github.com/onesto/sbt-mobilizer.git", Option("scm:git:git@github.com:onesto/sbt-mobilizer.git")))
 
-bintrayPublishSettings
-
 publishMavenStyle := false
 
 publishArtifact in Test := false
 
-repository in bintray := "sbt-plugins"
-
-bintrayOrganization in bintray := Option("onesto")
+bintrayOrganization := Option("onesto")
 
 licenses += ("MIT", url("https://github.com/onesto/sbt-mobilizer/blob/master/LICENSE"))
 
