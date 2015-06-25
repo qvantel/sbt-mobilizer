@@ -6,7 +6,7 @@ sbtVersion := "0.13.8"
 
 name := "sbt-mobilizer"
 
-version := "0.1.1"
+version := "0.1.2"
 
 organization := "fi.onesto.sbt"
 
