@@ -20,7 +20,7 @@ Installation
 
 Add to your `project/plugins.sbt`:
 
-    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.1.1")
+    addSbtPlugin("fi.onesto.sbt" % "sbt-mobilizer" % "0.1.2")
 
 
 Usage
