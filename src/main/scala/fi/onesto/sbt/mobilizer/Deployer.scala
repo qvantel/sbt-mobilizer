@@ -54,9 +54,11 @@ final class Deployer(
 
   def run(): Unit = {
     try {
-      createReleaseDirectory()
+      createReleaseRoot()
 
       val previousReleaseDirectories = findPreviousReleaseDirectories()
+
+      createReleaseDirectory()
 
       copyFiles(previousReleaseDirectories)
 
@@ -150,6 +152,18 @@ final class Deployer(
     val command = environment.rsyncCommand +: (rsyncOpts ++ sources) :+ target
     logger.debug(s"Running rsync command: $command")
     Process(command) ! sbtLogger
+  }
+
+  private[this] def createReleaseRoot(): Unit = {
+    logger.debug(s"creating release root $releasesRoot")
+    for ((hostname, (ssh, sftp)) <- connections) {
+      try {
+        sftp.mkdirs(releasesRoot)
+      } catch { case e: SSHException =>
+        logger.error(hostname, s"Could not create release root $releasesRoot: ${e.getMessage}")
+        throw e
+      }
+    }
   }
 
   private[this] def createReleaseDirectory(): Unit = {
