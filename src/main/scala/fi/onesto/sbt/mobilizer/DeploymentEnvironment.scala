@@ -6,6 +6,7 @@ import net.schmizz.sshj.SSHClient
 
 final case class DeploymentEnvironment(
     hosts:                 Seq[String]    = Seq("localhost"),
+    backupHosts:           Seq[String]    = Seq.empty,
     port:                  Int            = SSHClient.DEFAULT_PORT,
     username:              String         = currentUser,
     rootDirectory:         String         = "/tmp/deploy",
