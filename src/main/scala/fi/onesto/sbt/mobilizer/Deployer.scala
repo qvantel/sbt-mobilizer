@@ -123,7 +123,7 @@ final class Deployer(
 
   private[this] def copyPackages(previousReleaseDirectories: Map[String, Option[String]]): Future[Unit] = {
     Future sequence {
-      for (hostname <- environment.hosts ++ environment.backupHosts) yield {
+      for (hostname <- environment.hosts ++ environment.standbyHosts) yield {
         Future {
           val target = s"$username@$hostname:$releaseDirectory/"
           logger.info(hostname, s"Copying package ${mainPackage.getName} to $releaseDirectory")
@@ -135,7 +135,7 @@ final class Deployer(
 
   private[this] def copyLibraries(previousReleaseDirectory: Map[String, Option[String]]): Future[Unit] = {
     Future sequence {
-      for (hostname <- environment.hosts ++ environment.backupHosts) yield {
+      for (hostname <- environment.hosts ++ environment.standbyHosts) yield {
         Future {
           val target = s"$username@$hostname:$libDirectory"
           val jars = libraries ++ dependencies
@@ -313,7 +313,7 @@ object Deployer {
 
   private[this] def openConnections(environment: DeploymentEnvironment)(implicit ec: ExecutionContext): Connections = {
     val eventualConnections = Future sequence {
-      environment.hosts ++ environment.backupHosts map { hostname =>
+      environment.hosts ++ environment.standbyHosts map { hostname =>
         for {
           client <- Future(connect(hostname, environment.username, environment.port))
           sftp   <- Future(client.newSFTPClient())
