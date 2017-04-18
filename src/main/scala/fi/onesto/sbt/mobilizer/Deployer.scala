@@ -153,7 +153,10 @@ final class Deployer(
     val rsyncOpts = s"--port=$port" +: (RsyncBaseOpts ++ environment.rsyncOpts ++ linkDestOpt)
     val command = environment.rsyncCommand +: (rsyncOpts ++ sources) :+ target
     logger.debug(s"Running rsync command: $command")
-    Process(command) ! sbtLogger
+    val exitCode = Process(command) ! sbtLogger
+    if (exitCode != 0) {
+      throw new RsyncException(s"rsync command failed with exit status $exitCode")
+    }
   }
 
   private[this] def createReleaseRoot(): Unit = {
