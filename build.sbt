@@ -1,7 +1,7 @@
 organization := "fi.onesto.sbt"
 name := "sbt-mobilizer"
 
-version := "0.1.5"
+version := "0.2.0"
 
 organizationName := "Onesto Services Oy"
 organizationHomepage := Option(new java.net.URL("http://onesto.fi"))
