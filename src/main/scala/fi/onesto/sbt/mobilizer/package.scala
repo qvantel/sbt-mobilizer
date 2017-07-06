@@ -1,15 +1,8 @@
 package fi.onesto.sbt
 
-import java.io.{ByteArrayInputStream, StringReader, StringBufferInputStream, InputStream}
-import scala.collection.JavaConverters._
-import net.schmizz.sshj.{xfer, SSHClient}
+import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.IOUtils
 import net.schmizz.sshj.connection.channel.direct.Session
-import net.schmizz.sshj.connection.channel.direct.Session.Shell
-import net.schmizz.sshj.sftp.SFTPClient
-import net.schmizz.sshj.xfer.InMemorySourceFile
-import org.slf4j.LoggerFactory
-import sbt.Logger
 
 
 package object mobilizer {

@@ -43,7 +43,7 @@ object Mobilizer extends AutoPlugin {
           case _                   => sys.error(s"Failed to package dependency $dependencyTask")
         }
       }
-      val testResults     = (SK.test in Test).value
+      val ()              = (SK.test in Test).value
       val mainPackage     = (SK.`package` in Compile).value
       val mainClass       = (SK.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
       val libraries       = (SK.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)

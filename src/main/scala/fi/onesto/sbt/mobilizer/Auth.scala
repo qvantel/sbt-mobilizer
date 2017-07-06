@@ -5,34 +5,33 @@ import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.userauth.method._
 import com.jcraft.jsch.agentproxy.usocket.JNAUSocketFactory
 import com.jcraft.jsch.agentproxy.connector.{PageantConnector, SSHAgentConnector}
-import com.jcraft.jsch.agentproxy.{AgentProxy, Connector}
+import com.jcraft.jsch.agentproxy.{AgentProxy, Connector, Identity}
 import com.jcraft.jsch.agentproxy.sshj.AuthAgent
-
 import util._
 
 
 final class Auth(client: SSHClient) {
-  val idTypes = List("id_ecdsa", "id_rsa", "id_dsa")
-  val keyFiles = idTypes.map(new File(sshDirectory, _)).filter(_.exists())
+  val idTypes: List[String] = List("id_ecdsa", "id_rsa", "id_dsa")
+  val keyFiles: List[File] = idTypes.map(new File(sshDirectory, _)).filter(_.exists())
 
   def agentConnector: Option[Connector] = {
     if (SSHAgentConnector.isConnectorAvailable) {
-      Option(new SSHAgentConnector(new JNAUSocketFactory))
+      Some(new SSHAgentConnector(new JNAUSocketFactory))
     }
     else if (PageantConnector.isConnectorAvailable) {
-      Option(new PageantConnector())
+      Some(new PageantConnector())
     }
     else {
-      Option.empty
+      None
     }
   }
 
-  val agentProxy = agentConnector map(new AgentProxy(_))
+  val agentProxy: Option[AgentProxy] = agentConnector.map(new AgentProxy(_))
+  val agentIdentities: List[Identity] = agentProxy.map(_.getIdentities.toList) getOrElse Nil
 
-  val agentIdentities = agentProxy map(_.getIdentities.toList) getOrElse Nil
+  val agentMethods: List[AuthAgent] = agentProxy.toList.flatMap(agent => agentIdentities.map(new AuthAgent(agent, _)))
+  val pubkeyMethods: List[AuthPublickey] = keyFiles.map(file => new AuthPublickey(client.loadKeys(file.getPath)))
 
-  val agentMethods = agentProxy.map { agent => agentIdentities.map(new AuthAgent(agent, _)) }.toList.flatten
-  val pubkeyMethods = keyFiles map { file => client.loadKeys(file.getPath) } map (new AuthPublickey(_))
   val interactiveMethod = new AuthKeyboardInteractive(new PasswordResponseProvider(new PasswordPrompt(client)))
   val passwordMethod = new AuthPassword(new PasswordPrompt(client))
 

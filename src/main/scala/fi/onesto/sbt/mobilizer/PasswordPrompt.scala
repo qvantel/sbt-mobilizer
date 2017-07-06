@@ -6,7 +6,7 @@ import net.schmizz.sshj.userauth.password.{Resource, PasswordFinder}
 import util._
 
 
-class PasswordPrompt(client: SSHClient) extends PasswordFinder {
+final class PasswordPrompt(client: SSHClient) extends PasswordFinder {
   private[this] var tries = 0
 
   def reqPassword(resource: Resource[_]): Array[Char] = {

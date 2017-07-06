@@ -1,12 +1,13 @@
 package fi.onesto.sbt.mobilizer
 
-import java.io.{File, ByteArrayInputStream, InputStream}
+import java.io.{ByteArrayInputStream, File, InputStream}
+import scala.util.Properties.propOrElse
 import net.schmizz.sshj.xfer.InMemorySourceFile
 
 
 object util {
-  val currentUser = Option(System.getProperty("user.name")).getOrElse("root")
-  val userHome = Option(System.getProperty("user.home")).getOrElse("/")
+  val currentUser: String = propOrElse("user.name", "root")
+  val userHome: String = propOrElse("user.home", "/")
   val sshDirectory = new File(userHome, ".ssh")
   val sshConfigFile = new File(sshDirectory, "config")
 

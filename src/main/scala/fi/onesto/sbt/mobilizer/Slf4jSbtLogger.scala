@@ -12,7 +12,7 @@ final class Slf4jSbtLogger(
     private[this] val minimumLevel: Level.Value)
   extends org.slf4j.helpers.MarkerIgnoringBase {
 
-  private[this] final val serialVersionUID: Long = 1L
+  private[this] val serialVersionUID: Long = 1L
 
   private[this] def adjustLevel(level: Level.Value): Level.Value = {
     if (level.id >= minimumLevel.id) {
