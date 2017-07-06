@@ -1,14 +1,13 @@
 package fi.onesto.sbt.mobilizer
 
 import scala.util.control.NonFatal
+import scala.sys.process.{Process, ProcessLogger}
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration.Inf
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.SSHException
 import net.schmizz.sshj.sftp.SFTPClient
-import sbt._
-
 import util._
 
 
@@ -148,12 +147,12 @@ final class Deployer(
     } map (_ => ())
   }
 
-  private[this] def rsync(sources: Seq[String], target: String, port: Int, linkDest: Option[String] = None): Unit = {
+  private[this] def rsync(sources: Seq[String], target: String, port: Int, linkDest: Option[String]): Unit = {
     val linkDestOpt = linkDest.map("--link-dest=" + _).toList
     val rsyncOpts = s"--port=$port" +: (RsyncBaseOpts ++ environment.rsyncOpts ++ linkDestOpt)
     val command = environment.rsyncCommand +: (rsyncOpts ++ sources) :+ target
     logger.debug(s"Running rsync command: $command")
-    val exitCode = Process(command) ! sbtLogger
+    val exitCode = Process(command) ! ProcessLogger(sbtLogger.info(_), sbtLogger.error(_))
     if (exitCode != 0) {
       throw new RsyncException(s"rsync command failed with exit status $exitCode")
     }
@@ -199,7 +198,7 @@ final class Deployer(
   private[this] def createRevisionFile(): Unit = {
     revision map { content =>
       logger.info(s"Creating revision file $revisionFilePath")
-      for ((hostEntry, (_, _, sftp, _)) <- connections) yield {
+      for ((hostEntry, (_, _, sftp, _)) <- connections) {
         try {
           sftp.put(stringSourceFile("REVISION", content), revisionFilePath)
         } catch { case e: SSHException =>
@@ -306,7 +305,7 @@ object Deployer {
     }
   }
 
-  private[this] def connect(hostname: String, username: String = currentUser, port: Int = SSHClient.DEFAULT_PORT): SSHClient = {
+  private[this] def connect(hostname: String, username: String, port: Int): SSHClient = {
     import collection.JavaConverters._
     new SSHClient tap { client =>
       client.loadKnownHosts()

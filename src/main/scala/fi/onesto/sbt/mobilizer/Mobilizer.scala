@@ -5,8 +5,9 @@ import org.slf4j.impl.StaticLoggerBinder
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.SFTPClient
 import sbt.{Keys => SK, _}
-import sbt.classpath.ClasspathUtilities
 import sbt.complete.{Parsers, FixedSetExamples, Parser}
+
+import SbtCompat._
 
 
 object Mobilizer extends AutoPlugin {
@@ -46,7 +47,7 @@ object Mobilizer extends AutoPlugin {
       val ()              = (SK.test in Test).value
       val mainPackage     = (SK.`package` in Compile).value
       val mainClass       = (SK.mainClass in Runtime).value getOrElse sys.error("No main class detected.")
-      val libraries       = (SK.fullClasspath in Runtime).value.map(_.data).filter(ClasspathUtilities.isArchive)
+      val libraries       = (SK.fullClasspath in Runtime).value.map(_.data).filter(isArchive)
       val revision        = deployRevision.value
       val releaseId       = generateReleaseId()
 
