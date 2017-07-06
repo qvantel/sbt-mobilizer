@@ -7,7 +7,8 @@ import net.schmizz.sshj.SSHClient
 /**
   * Specifies a target environment for deployment.
   *
-  * @param hosts List of hosts in the format `HOSTNAME[:PORT]` where PORT defaults to [[port]] if not given.
+  * @param hosts List of hosts in the format `[USER@]HOSTNAME[:PORT]` where USER defaults to [[username]] and
+  *              PORT defaults to [[port]] if not given.
   * @param standbyHosts List of stand-by hosts: files are copied but [[restartCommand]] or [[checkCommand]] are not run.
   * @param port Default SSH port; deprecated in favour of `HOSTNAME:PORT` syntax.
   * @param username Name of the user to log in as to the target hosts.
@@ -23,21 +24,22 @@ import net.schmizz.sshj.SSHClient
   * @param checkCommand Shell command for checking whether application is up on the target hosts.
   */
 final case class DeploymentEnvironment(
-    hosts:                 Seq[String]    = Seq("localhost"),
-    standbyHosts:          Seq[String]    = Seq.empty,
+    hosts:                 Seq[String]              = Seq("localhost"),
+    standbyHosts:          Seq[String]              = Seq.empty,
     @deprecated("use host:port syntax for hosts", "0.2.0")
-    port:                  Int            = SSHClient.DEFAULT_PORT,
-    username:              String         = currentUser,
-    rootDirectory:         String         = "/tmp/deploy",
-    releasesDirectoryName: String         = "releases",
-    currentDirectoryName:  String         = "current",
-    libDirectoryName:      String         = "lib",
-    javaBin:               String         = "java",
-    javaOpts:              Seq[String]    = Seq.empty,
-    rsyncCommand:          String         = "rsync",
-    rsyncOpts:             Seq[String]    = Seq.empty,
-    restartCommand:        Option[String] = None,
-    checkCommand:          Option[String] = None) {
+    port:                  Int                      = SSHClient.DEFAULT_PORT,
+    @deprecated("use user@host:port syntax for hosts", "0.3.0")
+    username:              String                   = currentUser,
+    rootDirectory:         String                   = "/tmp/deploy",
+    releasesDirectoryName: String                   = "releases",
+    currentDirectoryName:  String                   = "current",
+    libDirectoryName:      String                   = "lib",
+    javaBin:               String                   = "java",
+    javaOpts:              Seq[String]              = Seq.empty,
+    rsyncCommand:          String                   = "rsync",
+    rsyncOpts:             Seq[String]              = Seq.empty,
+    restartCommand:        Option[String]           = None,
+    checkCommand:          Option[String]           = None) {
 
   val releasesRoot: String = s"$rootDirectory/$releasesDirectoryName"
   val currentDirectory:  String = s"$rootDirectory/$currentDirectoryName"
