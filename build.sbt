@@ -16,7 +16,7 @@ lazy val `sbt-mobilizer` = project.in(file("."))
   .settings(
     name := "sbt-mobilizer",
     sbtPlugin := true,
-    crossSbtVersions := Vector("0.13.15", "1.0.0-M6"),
+    crossSbtVersions := Vector("0.13.15", "1.0.0-RC2"),
 
     publishMavenStyle := false,
     publishArtifact in Test := false,
