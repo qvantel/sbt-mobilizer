@@ -7,6 +7,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration.Inf
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.SSHException
+import net.schmizz.sshj.connection.channel.direct.DirectConnection
 import net.schmizz.sshj.sftp.SFTPClient
 import util._
 
@@ -328,15 +329,13 @@ object Deployer {
       jumpClient.useCompression()
       jumpClient.connect(jumpThrough.hostname, jumpThrough.port)
       jumpClient.auth(jumpThrough.username, Auth(jumpClient).methods.asJava)
-
-      val channel = new ProxyChannel(jumpClient.getConnection, remote.hostname, remote.port)
-      channel.open()
+      val tunnel = jumpClient.newDirectConnection(remote.hostname, remote.port)
 
       val client = new SSHClient
       try {
         client.loadKnownHosts()
         client.useCompression()
-        client.connect(remote.hostname, remote.port, channel.getInputStream, channel.getOutputStream)
+        client.connectVia(tunnel)
         client.auth(remote.username, Auth(client).methods.asJava)
         client
       } catch {
