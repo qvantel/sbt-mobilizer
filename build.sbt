@@ -1,7 +1,7 @@
 lazy val `sbt-mobilizer` = project.in(file("."))
   .settings(inThisBuild(Seq(
     organization := "fi.onesto.sbt",
-    version   := "0.2.0",
+    version   := "0.3.0",
     startYear := Option(2013),
 
     organizationName := "Qvantel Finland Oy",
