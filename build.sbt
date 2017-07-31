@@ -45,7 +45,7 @@ lazy val `sbt-mobilizer` = project.in(file("."))
       "org.bouncycastle"        % "bcpkix-jdk15on"              % "1.57",
       "com.jcraft"              % "jzlib"                       % "1.1.3",
       "org.slf4j"               % "slf4j-api"                   % "1.7.25",
-      "com.hierynomus"          % "sshj"                        % "0.21.1",
+      "com.hierynomus"          % "sshj"                        % "0.21.2-dev.24.uncommitted+a96fbfc",
       "com.jcraft"              % "jsch.agentproxy.usocket-jna" % "0.0.9",
       "com.jcraft"              % "jsch.agentproxy.sshagent"    % "0.0.9",
       "com.jcraft"              % "jsch.agentproxy.pageant"     % "0.0.9",

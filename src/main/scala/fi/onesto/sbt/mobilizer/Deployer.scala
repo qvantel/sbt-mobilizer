@@ -198,7 +198,7 @@ final class Deployer(
   private[this] def createRevisionFile(): Unit = {
     revision map { content =>
       logger.info(s"Creating revision file $revisionFilePath")
-      for ((hostEntry, (_, _, sftp)) <- connections) {
+      for ((hostEntry, (_, _, sftp)) <- connections) yield {
         try {
           sftp.put(stringSourceFile("REVISION", content), revisionFilePath)
         } catch { case e: SSHException =>
@@ -307,11 +307,47 @@ object Deployer {
 
   private[this] def connect(remote: Remote): SSHClient = {
     import collection.JavaConverters._
-    new SSHClient tap { client =>
+    val client = new SSHClient
+    try {
       client.loadKnownHosts()
+      client.useCompression()
       client.connect(remote.hostname, remote.port)
       client.auth(remote.username, Auth(client).methods.asJava)
-      client.useCompression()
+      client
+    } catch { case NonFatal(e) =>
+      client.close()
+      throw e
+    }
+  }
+
+  private[this] def connectViaJump(remote: Remote, jumpThrough: Remote): SSHClient = {
+    import collection.JavaConverters._
+    val jumpClient = new SSHClient
+    try {
+      jumpClient.loadKnownHosts()
+      jumpClient.useCompression()
+      jumpClient.connect(jumpThrough.hostname, jumpThrough.port)
+      jumpClient.auth(jumpThrough.username, Auth(jumpClient).methods.asJava)
+
+      val channel = new ProxyChannel(jumpClient.getConnection, remote.hostname, remote.port)
+      channel.open()
+
+      val client = new SSHClient
+      try {
+        client.loadKnownHosts()
+        client.useCompression()
+        client.connect(remote.hostname, remote.port, channel.getInputStream, channel.getOutputStream)
+        client.auth(remote.username, Auth(client).methods.asJava)
+        client
+      } catch {
+        case NonFatal(e) =>
+          client.close()
+          throw e
+      }
+    } catch {
+      case NonFatal(e) =>
+        jumpClient.close()
+        throw e
     }
   }
 
@@ -341,7 +377,13 @@ object Deployer {
       environment.hosts ++ environment.standbyHosts map { hostEntry =>
         val remote = parseRemote(hostEntry)
         for {
-          client <- Future(connect(remote))
+          client <- Future {
+            environment.jumpServer(remote.hostname) match {
+              case None => connect(remote)
+              case Some(jump) => connectViaJump(remote, parseRemote(jump))
+            }
+
+          }
           sftp   <- Future(client.newSFTPClient())
         } yield (hostEntry, (remote, client, sftp))
       }

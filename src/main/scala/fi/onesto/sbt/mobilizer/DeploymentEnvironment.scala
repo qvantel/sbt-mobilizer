@@ -10,6 +10,8 @@ import net.schmizz.sshj.SSHClient
   * @param hosts List of hosts in the format `[USER@]HOSTNAME[:PORT]` where USER defaults to [[username]] and
   *              PORT defaults to [[port]] if not given.
   * @param standbyHosts List of stand-by hosts: files are copied but [[restartCommand]] or [[checkCommand]] are not run.
+  * @param jumpServer A function which receives a hostname and returns an jump server address (in above host format)
+  *                   if such is required for the connection.
   * @param port Default SSH port; deprecated in favour of `HOSTNAME:PORT` syntax.
   * @param username Name of the user to log in as to the target hosts.
   * @param rootDirectory Target directory to deploy to on the hosts.
@@ -26,6 +28,7 @@ import net.schmizz.sshj.SSHClient
 final case class DeploymentEnvironment(
     hosts:                 Seq[String]              = Seq("localhost"),
     standbyHosts:          Seq[String]              = Seq.empty,
+    jumpServer:            String => Option[String] = _ => None,
     @deprecated("use host:port syntax for hosts", "0.2.0")
     port:                  Int                      = SSHClient.DEFAULT_PORT,
     @deprecated("use user@host:port syntax for hosts", "0.3.0")
