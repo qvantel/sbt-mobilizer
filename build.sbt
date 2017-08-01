@@ -16,7 +16,7 @@ lazy val `sbt-mobilizer` = project.in(file("."))
   .settings(
     name := "sbt-mobilizer",
     sbtPlugin := true,
-    crossSbtVersions := Vector("0.13.15", "1.0.0-RC2"),
+    crossSbtVersions := Vector("0.13.16", "1.0.0-RC3"),
 
     publishMavenStyle := false,
     publishArtifact in Test := false,
@@ -30,14 +30,37 @@ lazy val `sbt-mobilizer` = project.in(file("."))
       "-Xlint"),
 
     scalacOptions in ThisBuild ++= Seq(
-      "-unchecked",
       "-deprecation",
+      "-encoding", "UTF-8",
+      "-explaintypes",
       "-feature",
+      "-unchecked",
+      // advanced
       "-Xcheckinit",
-      "-Xlint",
+      "-Xfuture",
       "-Xlog-reflective-calls",
+      "-Xlog-free-terms",
+      "-Xlog-free-types",
+      "-Xverify",
+      // private
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-inaccessible",
+      "-Ywarn-nullary-override",
+      "-Ywarn-nullary-unit",
+      "-Ywarn-value-discard",
       "-Xmax-classfile-name", "130"  // avoid problems on eCryptFS
     ),
+    scalacOptions ++= {
+      if (scalaVersion.value startsWith "2.10.") {
+        Seq("-Xlint")
+      } else {
+        Seq(
+          "-opt-warnings:_",
+          "-Xlint:-unused,_",
+          "-Ywarn-unused:_")
+      }
+    },
 
     libraryDependencies ++= Seq(
       "com.github.nscala-time" %% "nscala-time"                 % "2.16.0",

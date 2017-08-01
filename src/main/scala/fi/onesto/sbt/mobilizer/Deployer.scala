@@ -7,7 +7,6 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration.Inf
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.common.SSHException
-import net.schmizz.sshj.connection.channel.direct.DirectConnection
 import net.schmizz.sshj.sftp.SFTPClient
 import util._
 
@@ -207,6 +206,7 @@ final class Deployer(
           throw e
         }
       }
+      ()
     } getOrElse {
       logger.info(s"Revision information not available, not creating $revisionFilePath")
     }
